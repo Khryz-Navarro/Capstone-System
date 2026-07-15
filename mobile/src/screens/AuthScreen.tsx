@@ -1,7 +1,19 @@
 import React, { useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { launchImageLibraryAsync, requestMediaLibraryPermissionsAsync, MediaTypeOptions } from 'expo-image-picker';
-import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { loginUser, registerUser } from '../services/api';
 
 export default function AuthScreen({ onAuthenticated }: { onAuthenticated: () => void }) {
@@ -24,7 +36,6 @@ export default function AuthScreen({ onAuthenticated }: { onAuthenticated: () =>
       Alert.alert('Missing details', 'Please provide your email or username and password.');
       return;
     }
-
     setLoading(true);
     try {
       const data = await loginUser(login, password);
@@ -39,18 +50,15 @@ export default function AuthScreen({ onAuthenticated }: { onAuthenticated: () =>
 
   async function handlePickIdPhoto() {
     const permission = await requestMediaLibraryPermissionsAsync();
-
     if (!permission.granted) {
       Alert.alert('Permission needed', 'Please allow access to your photo library to upload your valid ID.');
       return;
     }
-
     const result = await launchImageLibraryAsync({
       mediaTypes: MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 0.8,
     });
-
     if (!result.canceled && result.assets?.[0]) {
       const asset = result.assets[0];
       setIdPhoto({
@@ -66,17 +74,14 @@ export default function AuthScreen({ onAuthenticated }: { onAuthenticated: () =>
       Alert.alert('Missing details', 'Please fill in your name, email, mobile number, and password.');
       return;
     }
-
     if (password !== confirmPassword) {
       Alert.alert('Password mismatch', 'Please confirm your password.');
       return;
     }
-
     if (!idPhoto) {
       Alert.alert('ID photo required', 'Please upload a clear photo of your valid ID before creating your account.');
       return;
     }
-
     setLoading(true);
     try {
       const formData = new FormData();
@@ -93,7 +98,6 @@ export default function AuthScreen({ onAuthenticated }: { onAuthenticated: () =>
       formData.append('password', password);
       formData.append('password_confirmation', confirmPassword);
       formData.append('id_photo', { uri: idPhoto.uri, name: idPhoto.name, type: idPhoto.type } as any);
-
       const data = await registerUser(formData);
       await AsyncStorage.setItem('mobile_token', data.token || '');
       onAuthenticated();
@@ -107,54 +111,128 @@ export default function AuthScreen({ onAuthenticated }: { onAuthenticated: () =>
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        {/* Brand Header */}
+        <View style={styles.brandHeader}>
+          <View style={styles.brandIcon}>
+            <Text style={styles.brandIconText}>⌂</Text>
+          </View>
+          <Text style={styles.brandTitle}>Barangay Connect</Text>
+          <Text style={styles.brandSub}>Your digital barangay portal</Text>
+        </View>
+
+        {/* Card */}
         <View style={styles.card}>
-          <Text style={styles.title}>Barangay Mobile Portal</Text>
+          {/* Tab switcher */}
+          <View style={styles.tabRow}>
+            <Pressable
+              style={[styles.tabBtn, mode === 'login' && styles.tabBtnActive]}
+              onPress={() => setMode('login')}
+            >
+              <Text style={[styles.tabText, mode === 'login' && styles.tabTextActive]}>Sign In</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.tabBtn, mode === 'signup' && styles.tabBtnActive]}
+              onPress={() => setMode('signup')}
+            >
+              <Text style={[styles.tabText, mode === 'signup' && styles.tabTextActive]}>Sign Up</Text>
+            </Pressable>
+          </View>
+
+          <Text style={styles.formTitle}>
+            {mode === 'login' ? 'Welcome back!' : 'Create your account'}
+          </Text>
+          <Text style={styles.formSubtitle}>
+            {mode === 'login'
+              ? 'Sign in to access your barangay services.'
+              : 'Fill in your details to register as a resident.'}
+          </Text>
 
           {mode === 'login' ? (
             <>
-              <TextInput autoCapitalize="none" autoCorrect={false} placeholder="Email or username" value={login} onChangeText={setLogin} style={styles.input} />
-              <TextInput placeholder="Password" secureTextEntry value={password} onChangeText={setPassword} style={styles.input} />
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Email or Username</Text>
+                <TextInput
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  placeholder="juan@example.com"
+                  placeholderTextColor="#9CA3AF"
+                  value={login}
+                  onChangeText={setLogin}
+                  style={styles.input}
+                />
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Password</Text>
+                <TextInput
+                  placeholder="••••••••"
+                  placeholderTextColor="#9CA3AF"
+                  secureTextEntry
+                  value={password}
+                  onChangeText={setPassword}
+                  style={styles.input}
+                />
+              </View>
             </>
           ) : (
             <>
-              <TextInput placeholder="First name" value={firstName} onChangeText={setFirstName} style={styles.input} />
-              <TextInput placeholder="Last name" value={lastName} onChangeText={setLastName} style={styles.input} />
-              <TextInput placeholder="Email" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} style={styles.input} />
-              <TextInput placeholder="Mobile number" keyboardType="phone-pad" value={mobileNumber} onChangeText={setMobileNumber} style={styles.input} />
-              <TextInput placeholder="Barangay ID" value={barangayId} onChangeText={setBarangayId} style={styles.input} />
-              <TextInput placeholder="City" value={city} onChangeText={setCity} style={styles.input} />
-              <TextInput placeholder="Province" value={province} onChangeText={setProvince} style={styles.input} />
-              <TextInput placeholder="Password" secureTextEntry value={password} onChangeText={setPassword} style={styles.input} />
-              <TextInput placeholder="Confirm password" secureTextEntry value={confirmPassword} onChangeText={setConfirmPassword} style={styles.input} />
+              <View style={styles.nameRow}>
+                <View style={[styles.inputGroup, styles.halfInput]}>
+                  <Text style={styles.inputLabel}>First Name</Text>
+                  <TextInput placeholder="Juan" placeholderTextColor="#9CA3AF" value={firstName} onChangeText={setFirstName} style={styles.input} />
+                </View>
+                <View style={[styles.inputGroup, styles.halfInput]}>
+                  <Text style={styles.inputLabel}>Last Name</Text>
+                  <TextInput placeholder="Dela Cruz" placeholderTextColor="#9CA3AF" value={lastName} onChangeText={setLastName} style={styles.input} />
+                </View>
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Email</Text>
+                <TextInput autoCapitalize="none" keyboardType="email-address" placeholder="juan@example.com" placeholderTextColor="#9CA3AF" value={email} onChangeText={setEmail} style={styles.input} />
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Mobile Number</Text>
+                <TextInput keyboardType="phone-pad" placeholder="09XX XXX XXXX" placeholderTextColor="#9CA3AF" value={mobileNumber} onChangeText={setMobileNumber} style={styles.input} />
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Barangay ID</Text>
+                <TextInput placeholder="1" placeholderTextColor="#9CA3AF" value={barangayId} onChangeText={setBarangayId} style={styles.input} keyboardType="numeric" />
+              </View>
+              <View style={styles.nameRow}>
+                <View style={[styles.inputGroup, styles.halfInput]}>
+                  <Text style={styles.inputLabel}>City</Text>
+                  <TextInput placeholder="City" placeholderTextColor="#9CA3AF" value={city} onChangeText={setCity} style={styles.input} />
+                </View>
+                <View style={[styles.inputGroup, styles.halfInput]}>
+                  <Text style={styles.inputLabel}>Province</Text>
+                  <TextInput placeholder="Province" placeholderTextColor="#9CA3AF" value={province} onChangeText={setProvince} style={styles.input} />
+                </View>
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Password</Text>
+                <TextInput placeholder="••••••••" placeholderTextColor="#9CA3AF" secureTextEntry value={password} onChangeText={setPassword} style={styles.input} />
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Confirm Password</Text>
+                <TextInput placeholder="••••••••" placeholderTextColor="#9CA3AF" secureTextEntry value={confirmPassword} onChangeText={setConfirmPassword} style={styles.input} />
+              </View>
+
+              {/* ID Photo upload */}
+              <View style={styles.uploadSection}>
+                <Text style={styles.uploadTitle}>📷  Valid ID Photo</Text>
+                <Text style={styles.uploadHint}>Upload a clear photo of any government-issued ID. Required for account verification.</Text>
+                <Pressable style={styles.uploadBtn} onPress={handlePickIdPhoto}>
+                  <Text style={styles.uploadBtnText}>{idPhoto ? '✓ Change ID photo' : '↑ Upload ID photo'}</Text>
+                </Pressable>
+                {idPhoto && <Image source={{ uri: idPhoto.uri }} style={styles.idPreview} />}
+              </View>
             </>
           )}
 
-          {mode === 'signup' && (
-            <View style={styles.uploadCard}>
-              <Text style={styles.uploadLabel}>Upload a clear photo of your valid ID</Text>
-              <Pressable style={styles.uploadButton} onPress={handlePickIdPhoto}>
-                <Text style={styles.uploadButtonText}>{idPhoto ? 'Change ID photo' : 'Upload ID photo'}</Text>
-              </Pressable>
-              {idPhoto ? (
-                <Image source={{ uri: idPhoto.uri }} style={styles.idPreview} />
-              ) : (
-                <Text style={styles.uploadHint}>Required for verification before your account can be used.</Text>
-              )}
-            </View>
-          )}
-
-          <Pressable style={styles.button} onPress={mode === 'login' ? handleLogin : handleSignup} disabled={loading}>
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>{mode === 'login' ? 'Sign In' : 'Create Account'}</Text>}
+          <Pressable style={[styles.submitBtn, loading && styles.submitBtnDisabled]} onPress={mode === 'login' ? handleLogin : handleSignup} disabled={loading}>
+            {loading
+              ? <ActivityIndicator color="#1a1a2e" />
+              : <Text style={styles.submitBtnText}>{mode === 'login' ? 'Sign In' : 'Create Account'}</Text>}
           </Pressable>
-
-          <View style={styles.switchRow}>
-            <Pressable style={[styles.switchButton, mode === 'login' && styles.switchButtonActive]} onPress={() => setMode('login')}>
-              <Text style={[styles.switchText, mode === 'login' && styles.switchTextActive]}>Sign In</Text>
-            </Pressable>
-            <Pressable style={[styles.switchButton, mode === 'signup' && styles.switchButtonActive]} onPress={() => setMode('signup')}>
-              <Text style={[styles.switchText, mode === 'signup' && styles.switchTextActive]}>Sign Up</Text>
-            </Pressable>
-          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -162,23 +240,55 @@ export default function AuthScreen({ onAuthenticated }: { onAuthenticated: () =>
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f7fb' },
-  scrollContent: { flexGrow: 1, justifyContent: 'center', padding: 24 },
-  card: { backgroundColor: '#fff', borderRadius: 16, padding: 24, gap: 12, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 10, elevation: 3 },
-  title: { fontSize: 24, fontWeight: '700', color: '#0f172a' },
-  subtitle: { color: '#475569', marginBottom: 8 },
-  switchRow: { flexDirection: 'row', gap: 8, marginBottom: 4 },
-  uploadCard: { borderWidth: 1, borderColor: '#dbeafe', borderRadius: 10, padding: 12, backgroundColor: '#eff6ff' },
-  uploadLabel: { fontWeight: '600', color: '#1d4ed8', marginBottom: 8 },
-  uploadButton: { backgroundColor: '#2563eb', borderRadius: 8, paddingVertical: 10, alignItems: 'center', marginBottom: 8 },
-  uploadButtonText: { color: '#fff', fontWeight: '600' },
-  uploadHint: { color: '#475569', fontSize: 13 },
+  container: { flex: 1, backgroundColor: '#1a1a2e' },
+  scrollContent: { flexGrow: 1, justifyContent: 'center', padding: 24, gap: 24 },
+  brandHeader: { alignItems: 'center', gap: 8 },
+  brandIcon: {
+    width: 56, height: 56, borderRadius: 16,
+    backgroundColor: '#C9A227', alignItems: 'center', justifyContent: 'center',
+  },
+  brandIconText: { fontSize: 28, color: '#fff' },
+  brandTitle: { fontSize: 22, fontWeight: '800', color: '#FFFFFF' },
+  brandSub: { fontSize: 13, color: '#9CA3AF' },
+  card: {
+    backgroundColor: '#FFFFFF', borderRadius: 20, padding: 24, gap: 14,
+    shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 20, elevation: 8,
+  },
+  tabRow: {
+    flexDirection: 'row', backgroundColor: '#F3F4F6',
+    borderRadius: 12, padding: 4,
+  },
+  tabBtn: { flex: 1, paddingVertical: 8, borderRadius: 10, alignItems: 'center' },
+  tabBtnActive: { backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 },
+  tabText: { fontSize: 14, fontWeight: '600', color: '#9CA3AF' },
+  tabTextActive: { color: '#0D1B2A' },
+  formTitle: { fontSize: 18, fontWeight: '800', color: '#0D1B2A', marginTop: 4 },
+  formSubtitle: { fontSize: 13, color: '#6B7280', marginTop: -8 },
+  nameRow: { flexDirection: 'row', gap: 10 },
+  halfInput: { flex: 1 },
+  inputGroup: { gap: 5 },
+  inputLabel: { fontSize: 12, fontWeight: '600', color: '#374151' },
+  input: {
+    borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10,
+    paddingHorizontal: 12, paddingVertical: 11, fontSize: 14,
+    color: '#0D1B2A', backgroundColor: '#F9FAFB',
+  },
+  uploadSection: {
+    borderWidth: 1, borderColor: '#FDE68A', borderRadius: 12,
+    padding: 14, backgroundColor: '#FFFBEB', gap: 8,
+  },
+  uploadTitle: { fontSize: 13, fontWeight: '700', color: '#92400E' },
+  uploadHint: { fontSize: 12, color: '#6B7280', lineHeight: 17 },
+  uploadBtn: {
+    backgroundColor: '#C9A227', borderRadius: 8,
+    paddingVertical: 10, alignItems: 'center',
+  },
+  uploadBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
   idPreview: { width: '100%', height: 160, borderRadius: 10, resizeMode: 'cover' },
-  switchButton: { flex: 1, paddingVertical: 10, borderRadius: 999, borderWidth: 1, borderColor: '#cbd5e1', alignItems: 'center' },
-  switchButtonActive: { backgroundColor: '#2563eb', borderColor: '#2563eb' },
-  switchText: { color: '#334155', fontWeight: '600' },
-  switchTextActive: { color: '#fff' },
-  input: { borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16 },
-  button: { marginTop: 8, backgroundColor: '#2563eb', borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
-  buttonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
+  submitBtn: {
+    backgroundColor: '#C9A227', borderRadius: 12,
+    paddingVertical: 14, alignItems: 'center', marginTop: 4,
+  },
+  submitBtnDisabled: { opacity: 0.7 },
+  submitBtnText: { color: '#1a1a2e', fontWeight: '800', fontSize: 15 },
 });

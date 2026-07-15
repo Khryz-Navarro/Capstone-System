@@ -34,6 +34,11 @@ export async function getProfile() {
   return response.data.data;
 }
 
+export async function updateProfile(payload: Record<string, unknown>) {
+  const response = await api.put('/profile', payload);
+  return response.data.data;
+}
+
 export async function getDocumentTypes() {
   const response = await api.get('/document-types');
   return response.data.data;
@@ -44,9 +49,29 @@ export async function listRequests() {
   return response.data.data;
 }
 
+export async function getRequest(id: number) {
+  const response = await api.get(`/document-requests/${id}`);
+  return response.data.data;
+}
+
 export async function createRequest(documentTypeId: number, purpose: string) {
   const response = await api.post('/document-requests', { document_type_id: documentTypeId, purpose });
   return response.data.data;
+}
+
+export async function getNotifications() {
+  const response = await api.get('/notifications');
+  return response.data.data;
+}
+
+export async function markNotificationRead(id: string) {
+  const response = await api.post(`/notifications/${id}/read`);
+  return response.data;
+}
+
+export async function markAllNotificationsRead() {
+  const response = await api.post('/notifications/read-all');
+  return response.data;
 }
 
 export async function logoutUser() {
