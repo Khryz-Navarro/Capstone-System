@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Api\Auth;
 
+use App\Enums\ProofType;
 use App\Enums\UserRole;
 use App\Enums\VerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Models\Barangay;
+use App\Models\ResidencyProof;
 use App\Models\ResidentProfile;
 use App\Models\SystemSetting;
 use App\Models\User;
@@ -61,6 +63,21 @@ class RegisteredUserController extends Controller
                 'city' => $request->input('city'),
                 'province' => $request->input('province'),
                 'verification_status' => VerificationStatus::Pending,
+            ]);
+
+            $file = $request->file('id_photo');
+            $path = $file->store("residency-proofs/{$user->id}", 'local');
+
+            ResidencyProof::create([
+                'tenant_id' => $barangay->tenant_id,
+                'barangay_id' => $barangay->id,
+                'user_id' => $user->id,
+                'type' => ProofType::GovernmentId,
+                'file_path' => $path,
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type' => $file->getClientMimeType(),
+                'size' => $file->getSize(),
+                'status' => VerificationStatus::Pending,
             ]);
 
             return $user;

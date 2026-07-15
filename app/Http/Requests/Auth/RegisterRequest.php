@@ -32,6 +32,7 @@ class RegisterRequest extends FormRequest
             'civil_status' => ['required', Rule::enum(CivilStatus::class)],
             'occupation' => ['nullable', 'string', 'max:100'],
             'mobile_number' => ['required', 'string', 'max:20'],
+            'id_photo' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
 
             'house_number' => ['nullable', 'string', 'max:50'],
             'street' => ['nullable', 'string', 'max:150'],

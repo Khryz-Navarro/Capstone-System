@@ -2,6 +2,7 @@
 
 use App\Models\Barangay;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 
 it('registers a resident with a profile', function () {
     $barangay = Barangay::factory()->create();
@@ -38,6 +39,25 @@ it('registers a resident with a profile', function () {
         'user_id' => $user->id,
         'verification_status' => 'pending',
     ]);
+});
+
+it('requires a valid id photo during registration', function () {
+    $barangay = Barangay::factory()->create();
+
+    $this->postJson('/api/auth/register', [
+        'barangay_id' => $barangay->id,
+        'first_name' => 'Juan',
+        'last_name' => 'Dela Cruz',
+        'gender' => 'male',
+        'birthdate' => '1990-01-01',
+        'civil_status' => 'single',
+        'mobile_number' => '09171234567',
+        'city' => 'Kidapawan City',
+        'province' => 'Cotabato',
+        'email' => 'juan@example.com',
+        'password' => 'password123',
+        'password_confirmation' => 'password123',
+    ])->assertStatus(422)->assertJsonValidationErrorFor('id_photo');
 });
 
 it('rejects registration into a suspended barangay', function () {

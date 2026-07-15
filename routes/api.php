@@ -31,6 +31,8 @@ Route::prefix('auth')->group(function () {
         ->name('verification.verify');
 });
 
+Route::post('/mobile/login', [\App\Http\Controllers\Api\MobileAuthController::class, 'login']);
+
 /*
 |--------------------------------------------------------------------------
 | Authenticated routes
