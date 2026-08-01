@@ -16,19 +16,72 @@ import {
 } from 'react-native';
 import { loginUser, registerUser } from '../services/api';
 
+const GENDER_OPTIONS = [
+  { label: 'Male', value: 'male' },
+  { label: 'Female', value: 'female' },
+];
+
+const CIVIL_STATUS_OPTIONS = [
+  { label: 'Single', value: 'single' },
+  { label: 'Married', value: 'married' },
+  { label: 'Widowed', value: 'widowed' },
+  { label: 'Separated', value: 'separated' },
+  { label: 'Divorced', value: 'divorced' },
+];
+
+function OptionPicker({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: { label: string; value: string }[];
+  onChange: (v: string) => void;
+}) {
+  return (
+    <View style={styles.inputGroup}>
+      <Text style={styles.inputLabel}>{label}</Text>
+      <View style={styles.optionRow}>
+        {options.map((opt) => (
+          <Pressable
+            key={opt.value}
+            style={[styles.optionBtn, value === opt.value && styles.optionBtnActive]}
+            onPress={() => onChange(opt.value)}
+          >
+            <Text style={[styles.optionText, value === opt.value && styles.optionTextActive]}>
+              {opt.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 export default function AuthScreen({ onAuthenticated }: { onAuthenticated: () => void }) {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
+
+  // Login fields
   const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [email, setEmail] = useState('');
+
+  // Sign-up fields
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
+  const [gender, setGender] = useState('male');
+  const [civilStatus, setCivilStatus] = useState('single');
+  const [birthdate, setBirthdate] = useState('');
   const [city, setCity] = useState('Kidapawan City');
   const [province, setProvince] = useState('Cotabato');
   const [barangayId, setBarangayId] = useState('1');
+  const [signupPassword, setSignupPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [idPhoto, setIdPhoto] = useState<{ uri: string; name: string; type: string } | null>(null);
+
   const [loading, setLoading] = useState(false);
 
   async function handleLogin() {
@@ -42,7 +95,13 @@ export default function AuthScreen({ onAuthenticated }: { onAuthenticated: () =>
       await AsyncStorage.setItem('mobile_token', data.token);
       onAuthenticated();
     } catch (error: any) {
-      Alert.alert('Login failed', error?.response?.data?.message || 'Unable to sign in.');
+      const errors = error?.response?.data?.errors as Record<string, string[]> | undefined;
+      const firstError = errors ? Object.values(errors)[0]?.[0] : undefined;
+      const msg =
+        firstError ??
+        error?.response?.data?.message ??
+        'Unable to sign in. Please check your credentials.';
+      Alert.alert('Login failed', msg);
     } finally {
       setLoading(false);
     }
@@ -70,39 +129,62 @@ export default function AuthScreen({ onAuthenticated }: { onAuthenticated: () =>
   }
 
   async function handleSignup() {
-    if (!email || !password || !firstName || !lastName || !mobileNumber) {
-      Alert.alert('Missing details', 'Please fill in your name, email, mobile number, and password.');
+    if (!firstName || !lastName || !email || !mobileNumber) {
+      Alert.alert('Missing details', 'Please fill in your name, email, and mobile number.');
       return;
     }
-    if (password !== confirmPassword) {
-      Alert.alert('Password mismatch', 'Please confirm your password.');
+    if (!birthdate) {
+      Alert.alert('Missing details', 'Please enter your date of birth (YYYY-MM-DD).');
+      return;
+    }
+    if (!signupPassword) {
+      Alert.alert('Missing details', 'Please create a password.');
+      return;
+    }
+    if (signupPassword !== confirmPassword) {
+      Alert.alert('Password mismatch', 'Your passwords do not match.');
       return;
     }
     if (!idPhoto) {
-      Alert.alert('ID photo required', 'Please upload a clear photo of your valid ID before creating your account.');
+      Alert.alert('ID photo required', 'Please upload a clear photo of your valid ID.');
       return;
     }
+
     setLoading(true);
     try {
       const formData = new FormData();
       formData.append('barangay_id', String(Number(barangayId)));
       formData.append('first_name', firstName);
       formData.append('last_name', lastName);
-      formData.append('gender', 'male');
-      formData.append('birthdate', '2000-01-01');
-      formData.append('civil_status', 'single');
+      formData.append('gender', gender);
+      formData.append('birthdate', birthdate);
+      formData.append('civil_status', civilStatus);
       formData.append('mobile_number', mobileNumber);
       formData.append('city', city);
       formData.append('province', province);
       formData.append('email', email);
-      formData.append('password', password);
+      formData.append('password', signupPassword);
       formData.append('password_confirmation', confirmPassword);
       formData.append('id_photo', { uri: idPhoto.uri, name: idPhoto.name, type: idPhoto.type } as any);
+
       const data = await registerUser(formData);
-      await AsyncStorage.setItem('mobile_token', data.token || '');
+
+      if (!data?.token) {
+        throw new Error('No token received from server.');
+      }
+
+      await AsyncStorage.setItem('mobile_token', data.token);
       onAuthenticated();
     } catch (error: any) {
-      Alert.alert('Registration failed', error?.response?.data?.message || 'Unable to create your account.');
+      // Surface the actual server validation error message
+      const errors = error?.response?.data?.errors as Record<string, string[]> | undefined;
+      const firstError = errors ? Object.values(errors)[0]?.[0] : undefined;
+      const msg =
+        firstError ??
+        error?.response?.data?.message ??
+        error?.message ??
+        'Unable to create your account. Please try again.';
+      Alert.alert('Registration failed', String(msg));
     } finally {
       setLoading(false);
     }
@@ -185,18 +267,38 @@ export default function AuthScreen({ onAuthenticated }: { onAuthenticated: () =>
                   <TextInput placeholder="Dela Cruz" placeholderTextColor="#9CA3AF" value={lastName} onChangeText={setLastName} style={styles.input} />
                 </View>
               </View>
+
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Email</Text>
                 <TextInput autoCapitalize="none" keyboardType="email-address" placeholder="juan@example.com" placeholderTextColor="#9CA3AF" value={email} onChangeText={setEmail} style={styles.input} />
               </View>
+
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Mobile Number</Text>
                 <TextInput keyboardType="phone-pad" placeholder="09XX XXX XXXX" placeholderTextColor="#9CA3AF" value={mobileNumber} onChangeText={setMobileNumber} style={styles.input} />
               </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Date of Birth (YYYY-MM-DD)</Text>
+                <TextInput
+                  placeholder="1995-06-15"
+                  placeholderTextColor="#9CA3AF"
+                  value={birthdate}
+                  onChangeText={setBirthdate}
+                  style={styles.input}
+                  keyboardType="numbers-and-punctuation"
+                />
+              </View>
+
+              <OptionPicker label="Gender" value={gender} options={GENDER_OPTIONS} onChange={setGender} />
+
+              <OptionPicker label="Civil Status" value={civilStatus} options={CIVIL_STATUS_OPTIONS} onChange={setCivilStatus} />
+
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Barangay ID</Text>
                 <TextInput placeholder="1" placeholderTextColor="#9CA3AF" value={barangayId} onChangeText={setBarangayId} style={styles.input} keyboardType="numeric" />
               </View>
+
               <View style={styles.nameRow}>
                 <View style={[styles.inputGroup, styles.halfInput]}>
                   <Text style={styles.inputLabel}>City</Text>
@@ -207,9 +309,10 @@ export default function AuthScreen({ onAuthenticated }: { onAuthenticated: () =>
                   <TextInput placeholder="Province" placeholderTextColor="#9CA3AF" value={province} onChangeText={setProvince} style={styles.input} />
                 </View>
               </View>
+
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Password</Text>
-                <TextInput placeholder="••••••••" placeholderTextColor="#9CA3AF" secureTextEntry value={password} onChangeText={setPassword} style={styles.input} />
+                <TextInput placeholder="••••••••" placeholderTextColor="#9CA3AF" secureTextEntry value={signupPassword} onChangeText={setSignupPassword} style={styles.input} />
               </View>
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Confirm Password</Text>
@@ -228,7 +331,11 @@ export default function AuthScreen({ onAuthenticated }: { onAuthenticated: () =>
             </>
           )}
 
-          <Pressable style={[styles.submitBtn, loading && styles.submitBtnDisabled]} onPress={mode === 'login' ? handleLogin : handleSignup} disabled={loading}>
+          <Pressable
+            style={[styles.submitBtn, loading && styles.submitBtnDisabled]}
+            onPress={mode === 'login' ? handleLogin : handleSignup}
+            disabled={loading}
+          >
             {loading
               ? <ActivityIndicator color="#1a1a2e" />
               : <Text style={styles.submitBtnText}>{mode === 'login' ? 'Sign In' : 'Create Account'}</Text>}
@@ -273,6 +380,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 11, fontSize: 14,
     color: '#0D1B2A', backgroundColor: '#F9FAFB',
   },
+  optionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  optionBtn: {
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8,
+    borderWidth: 1, borderColor: '#E5E7EB', backgroundColor: '#F9FAFB',
+  },
+  optionBtnActive: { backgroundColor: '#C9A227', borderColor: '#C9A227' },
+  optionText: { fontSize: 13, fontWeight: '600', color: '#374151' },
+  optionTextActive: { color: '#FFFFFF' },
   uploadSection: {
     borderWidth: 1, borderColor: '#FDE68A', borderRadius: 12,
     padding: 14, backgroundColor: '#FFFBEB', gap: 8,

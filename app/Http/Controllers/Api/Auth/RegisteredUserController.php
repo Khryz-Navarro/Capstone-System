@@ -93,8 +93,14 @@ class RegisteredUserController extends Controller
 
         $user->load(['barangay', 'residentProfile']);
 
-        return UserResource::make($user)
-            ->response()
-            ->setStatusCode(201);
+        $token = $user->createToken('mobile-app')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Registration successful.',
+            'data' => UserResource::make($user)->resolve() + [
+                'token' => $token,
+                'token_type' => 'Bearer',
+            ],
+        ], 201);
     }
 }
