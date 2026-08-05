@@ -1,4 +1,8 @@
 import { AxiosError } from 'axios';
+import { Browser } from '@capacitor/browser';
+import { Capacitor } from '@capacitor/core';
+import { Directory, Filesystem } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import api from '@/lib/axios';
 import { getApiErrorMessage } from '@/lib/errors';
 
@@ -81,13 +85,73 @@ async function fetchAuthenticatedBlob(url: string): Promise<{ blob: Blob; filena
     };
 }
 
+async function blobToBase64(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const result = reader.result;
+
+            if (typeof result !== 'string') {
+                reject(new Error('Unable to read file data.'));
+
+                return;
+            }
+
+            const base64 = result.split(',')[1];
+
+            if (! base64) {
+                reject(new Error('Unable to encode file data.'));
+
+                return;
+            }
+
+            resolve(base64);
+        };
+        reader.onerror = () => reject(new Error('Unable to read file data.'));
+        reader.readAsDataURL(blob);
+    });
+}
+
+async function shareNativeFile(blob: Blob, filename: string): Promise<void> {
+    const base64 = await blobToBase64(blob);
+    const saved = await Filesystem.writeFile({
+        path: filename,
+        data: base64,
+        directory: Directory.Cache,
+    });
+
+    await Share.share({
+        title: filename,
+        url: saved.uri,
+    });
+}
+
+async function openNativeFile(blob: Blob, filename: string): Promise<void> {
+    const base64 = await blobToBase64(blob);
+    const saved = await Filesystem.writeFile({
+        path: filename,
+        data: base64,
+        directory: Directory.Cache,
+    });
+
+    await Browser.open({ url: saved.uri });
+}
+
 export async function downloadAuthenticatedFile(url: string, suggestedFilename?: string): Promise<void> {
     try {
         const { blob, filename } = await fetchAuthenticatedBlob(url);
+        const resolvedFilename = filename ?? suggestedFilename ?? 'download';
+
+        if (Capacitor.isNativePlatform()) {
+            await shareNativeFile(blob, resolvedFilename);
+
+            return;
+        }
+
         const objectUrl = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = objectUrl;
-        link.download = filename ?? suggestedFilename ?? 'download';
+        link.download = resolvedFilename;
         document.body.appendChild(link);
         link.click();
         link.remove();
@@ -99,7 +163,15 @@ export async function downloadAuthenticatedFile(url: string, suggestedFilename?:
 
 export async function openAuthenticatedFile(url: string): Promise<void> {
     try {
-        const { blob } = await fetchAuthenticatedBlob(url);
+        const { blob, filename } = await fetchAuthenticatedBlob(url);
+        const resolvedFilename = filename ?? 'preview.pdf';
+
+        if (Capacitor.isNativePlatform()) {
+            await openNativeFile(blob, resolvedFilename);
+
+            return;
+        }
+
         const objectUrl = URL.createObjectURL(blob);
         const tab = window.open(objectUrl, '_blank', 'noopener,noreferrer');
 

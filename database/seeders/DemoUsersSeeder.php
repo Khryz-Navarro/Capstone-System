@@ -18,7 +18,7 @@ class DemoUsersSeeder extends Seeder
     public function run(): void
     {
         User::firstOrCreate(
-            ['email' => 'superadmin@mtbdrs.test'],
+            ['email' => 'superadmin@doculink.test'],
             [
                 'name' => 'System Super Admin',
                 'username' => 'superadmin',

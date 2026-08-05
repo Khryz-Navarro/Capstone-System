@@ -37,6 +37,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { notificationApi, superApi } from '@/lib/api';
+import { isMobileApp } from '@/lib/platform';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/providers/auth-provider';
 
@@ -158,9 +159,10 @@ export function DashboardLayout() {
     const navSections = buildNav(user.role);
     const homePath = homePathForRole(user.role);
     const residentSelectorDisabled = !actingBarangay;
+    const nativeApp = isMobileApp();
 
     return (
-        <div className="bg-muted/30 min-h-screen">
+        <div className={cn('bg-muted/30 min-h-screen', nativeApp && 'pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]')}>
             {/* Sidebar (desktop) */}
             <aside className="bg-sidebar fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r lg:flex">
                 <div className="flex h-16 items-center border-b px-6">

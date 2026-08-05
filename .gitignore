@@ -25,3 +25,13 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Capacitor mobile shell
+/mobile/node_modules
+/mobile/.env
+/mobile/android/app/build
+/mobile/android/.gradle
+/mobile/android/build
+/mobile/ios/App/build
+/mobile/ios/App/Pods
+/mobile/www/icons

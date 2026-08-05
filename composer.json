@@ -14,7 +14,7 @@
         "laravel/framework": "^13.8",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^3.0",
-        "simplesoftwareio/simple-qrcode": "^4.2"
+        "nativephp/mobile": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

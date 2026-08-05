@@ -1,7 +1,9 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { FullScreenLoader } from '@/components/page-loader';
+import { isMobileApp } from '@/lib/platform';
 import { roleHome } from '@/lib/navigation';
 import { useAuth } from '@/providers/auth-provider';
+import { MobileUnsupportedPage } from '@/pages/mobile-unsupported-page';
 import type { UserRole } from '@/types';
 
 /**
@@ -17,8 +19,23 @@ export function ProtectedRoute({ roles }: { roles?: UserRole[] }) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
+    if (isMobileApp() && user?.role !== 'resident') {
+        return <MobileUnsupportedPage />;
+    }
+
     if (roles && user && user.role !== 'super_admin' && !roles.includes(user.role)) {
         return <Navigate to={roleHome(user.role)} replace />;
+    }
+
+    return <Outlet />;
+}
+
+/**
+ * Blocks staff/admin routes in the mobile app shell.
+ */
+export function MobileBlockedRoute() {
+    if (isMobileApp()) {
+        return <Navigate to="/dashboard" replace />;
     }
 
     return <Outlet />;

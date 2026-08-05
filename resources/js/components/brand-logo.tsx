@@ -9,7 +9,7 @@ export function BrandLogo({ className, showText = true }: { className?: string; 
             </div>
             {showText && (
                 <div className="flex flex-col leading-none">
-                    <span className="text-base font-bold tracking-tight">MT-BDRS</span>
+                    <span className="text-base font-bold tracking-tight">DocuLink</span>
                     <span className="text-muted-foreground text-[11px]">Barangay Documents</span>
                 </div>
             )}

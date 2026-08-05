@@ -14,7 +14,7 @@ export function AuthLayout({
     footer?: React.ReactNode;
 }) {
     return (
-        <div className="bg-muted/30 relative flex min-h-screen flex-col items-center justify-center p-4">
+        <div className="bg-muted/30 relative flex min-h-screen flex-col items-center justify-center p-4 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
             <div className="absolute top-4 right-4">
                 <ModeToggle />
             </div>

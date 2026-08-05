@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { residencyApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/errors';
+import { isMobileApp } from '@/lib/platform';
 import { useResidentContext } from '@/hooks/use-resident-context';
 import { ResidentSelectionAlert } from '@/components/resident-selection-alert';
 
@@ -119,7 +120,8 @@ export function ResidencyPage() {
                                 <input
                                     id="file"
                                     type="file"
-                                    accept=".jpg,.jpeg,.png,.pdf"
+                                    accept={isMobileApp() ? 'image/*,.pdf' : '.jpg,.jpeg,.png,.pdf'}
+                                    capture={isMobileApp() ? 'environment' : undefined}
                                     onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                                     className="border-input file:bg-secondary file:text-secondary-foreground block w-full rounded-md border text-sm file:mr-3 file:border-0 file:px-3 file:py-2 file:text-sm"
                                 />

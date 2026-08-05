@@ -6,9 +6,10 @@ use App\Enums\RequestStatus;
 use App\Models\DocumentRequest;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Writer\SvgWriter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class CertificateGenerator
 {
@@ -25,7 +26,15 @@ class CertificateGenerator
         $certificateNumber = $request->certificate_number ?? $this->generateCertificateNumber($request);
 
         $verifyUrl = rtrim((string) config('app.url'), '/').'/verify/'.$request->reference_number;
-        $qrSvg = base64_encode(QrCode::format('svg')->size(140)->margin(0)->generate($verifyUrl));
+        $qrSvg = base64_encode(
+            Builder::create()
+                ->writer(new SvgWriter)
+                ->data($verifyUrl)
+                ->size(140)
+                ->margin(0)
+                ->build()
+                ->getString()
+        );
 
         $pdf = Pdf::loadView('certificates.default', [
             'request' => $request,

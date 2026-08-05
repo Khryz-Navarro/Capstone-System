@@ -1,0 +1,12 @@
+{
+    "name": "doculink-mobile",
+    "private": true,
+    "version": "1.0.0",
+    "description": "DocuLink Capacitor shell for Android and iOS",
+    "scripts": {
+        "cap:sync": "npx cap sync",
+        "cap:open:android": "npx cap open android",
+        "cap:open:ios": "npx cap open ios",
+        "cap:assets": "npx capacitor-assets generate --iconBackgroundColor \"#1e40af\" --iconBackgroundColorDark \"#1e3a8a\" --splashBackgroundColor \"#1e40af\" --splashBackgroundColorDark \"#1e3a8a\""
+    }
+}

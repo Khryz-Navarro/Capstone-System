@@ -4,9 +4,17 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "mobile:sync": "cd mobile && npx cap sync",
+        "mobile:android": "cd mobile && npx cap open android",
+        "mobile:ios": "cd mobile && npx cap open ios",
+        "mobile:assets": "cd mobile && npx capacitor-assets generate --iconBackgroundColor \"#1e40af\" --iconBackgroundColorDark \"#1e3a8a\" --splashBackgroundColor \"#1e40af\" --splashBackgroundColorDark \"#1e3a8a\""
     },
     "devDependencies": {
+        "@capacitor/android": "^7.2.0",
+        "@capacitor/assets": "^3.0.5",
+        "@capacitor/cli": "^7.2.0",
+        "@capacitor/ios": "^7.2.0",
         "@tailwindcss/vite": "^4.0.0",
         "@types/node": "^26.0.0",
         "@types/react": "^19.2.17",
@@ -20,6 +28,13 @@
         "vite": "^8.0.0"
     },
     "dependencies": {
+        "@capacitor/app": "^7.0.1",
+        "@capacitor/browser": "^7.0.1",
+        "@capacitor/core": "^7.2.0",
+        "@capacitor/filesystem": "^7.1.1",
+        "@capacitor/share": "^7.0.1",
+        "@capacitor/splash-screen": "^7.0.1",
+        "@capacitor/status-bar": "^7.0.1",
         "@hookform/resolvers": "^5.4.0",
         "@radix-ui/react-avatar": "^1.2.0",
         "@radix-ui/react-dialog": "^1.1.17",
@@ -38,6 +53,7 @@
         "react-dom": "^19.2.7",
         "react-hook-form": "^7.79.0",
         "react-router-dom": "^7.18.0",
+        "sharp": "^0.35.3",
         "sonner": "^2.0.7",
         "tailwind-merge": "^3.6.0",
         "zod": "^4.4.3"

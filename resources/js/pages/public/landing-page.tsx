@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import {
     ArrowRightIcon,
     ClipboardCheckIcon,
@@ -11,6 +11,7 @@ import { BrandLogo } from '@/components/brand-logo';
 import { ModeToggle } from '@/components/mode-toggle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { isMobileApp } from '@/lib/platform';
 import { useAuth } from '@/providers/auth-provider';
 
 const features = [
@@ -29,6 +30,10 @@ const steps = [
 
 export function LandingPage() {
     const { isAuthenticated } = useAuth();
+
+    if (isMobileApp()) {
+        return <Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />;
+    }
 
     return (
         <div className="bg-background min-h-screen">
@@ -115,7 +120,7 @@ export function LandingPage() {
             <footer className="border-t">
                 <div className="text-muted-foreground mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-sm sm:flex-row">
                     <BrandLogo showText />
-                    <p>© {new Date().getFullYear()} MT-BDRS. All rights reserved.</p>
+                    <p>© {new Date().getFullYear()} DocuLink. All rights reserved.</p>
                 </div>
             </footer>
         </div>

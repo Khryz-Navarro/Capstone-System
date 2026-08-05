@@ -39,7 +39,7 @@ class ResidencyReviewedNotification extends Notification
             $message->line('Reason: '.$this->reason);
         }
 
-        return $message->line('Thank you for using MT-BDRS.');
+        return $message->line('Thank you for using DocuLink.');
     }
 
     /**

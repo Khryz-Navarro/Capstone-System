@@ -1,6 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
-import { GuestRoute, ProtectedRoute } from '@/components/route-guards';
+import { GuestRoute, MobileBlockedRoute, ProtectedRoute } from '@/components/route-guards';
 import { DocumentTemplatesPage } from '@/pages/admin/document-templates-page';
 import { DocumentTypesPage } from '@/pages/admin/document-types-page';
 import { ReportsPage } from '@/pages/admin/reports-page';
@@ -58,30 +58,36 @@ export function App() {
             </Route>
 
             <Route element={<ProtectedRoute roles={['barangay_staff', 'barangay_admin', 'super_admin']} />}>
-                <Route element={<DashboardLayout />}>
-                    <Route path="/staff" element={<StaffDashboardPage />} />
-                    <Route path="/staff/requests" element={<RequestQueuePage />} />
-                    <Route path="/staff/requests/:id" element={<RequestReviewPage />} />
-                    <Route path="/staff/residents" element={<ResidentListPage />} />
-                    <Route path="/staff/residents/:id" element={<ResidentDetailPage />} />
+                <Route element={<MobileBlockedRoute />}>
+                    <Route element={<DashboardLayout />}>
+                        <Route path="/staff" element={<StaffDashboardPage />} />
+                        <Route path="/staff/requests" element={<RequestQueuePage />} />
+                        <Route path="/staff/requests/:id" element={<RequestReviewPage />} />
+                        <Route path="/staff/residents" element={<ResidentListPage />} />
+                        <Route path="/staff/residents/:id" element={<ResidentDetailPage />} />
+                    </Route>
                 </Route>
             </Route>
 
             <Route element={<ProtectedRoute roles={['barangay_admin', 'super_admin']} />}>
-                <Route element={<DashboardLayout />}>
-                    <Route path="/admin/reports" element={<ReportsPage />} />
-                    <Route path="/admin/staff" element={<StaffListPage />} />
-                    <Route path="/admin/document-types" element={<DocumentTypesPage />} />
-                    <Route path="/admin/document-types/:typeId/templates" element={<DocumentTemplatesPage />} />
+                <Route element={<MobileBlockedRoute />}>
+                    <Route element={<DashboardLayout />}>
+                        <Route path="/admin/reports" element={<ReportsPage />} />
+                        <Route path="/admin/staff" element={<StaffListPage />} />
+                        <Route path="/admin/document-types" element={<DocumentTypesPage />} />
+                        <Route path="/admin/document-types/:typeId/templates" element={<DocumentTemplatesPage />} />
+                    </Route>
                 </Route>
             </Route>
 
             <Route element={<ProtectedRoute roles={['super_admin']} />}>
-                <Route element={<DashboardLayout />}>
-                    <Route path="/super" element={<SuperAnalyticsPage />} />
-                    <Route path="/super/barangays" element={<BarangaysPage />} />
-                    <Route path="/super/staff" element={<SuperStaffListPage />} />
-                    <Route path="/super/settings" element={<SystemSettingsPage />} />
+                <Route element={<MobileBlockedRoute />}>
+                    <Route element={<DashboardLayout />}>
+                        <Route path="/super" element={<SuperAnalyticsPage />} />
+                        <Route path="/super/barangays" element={<BarangaysPage />} />
+                        <Route path="/super/staff" element={<SuperStaffListPage />} />
+                        <Route path="/super/settings" element={<SystemSettingsPage />} />
+                    </Route>
                 </Route>
             </Route>
 

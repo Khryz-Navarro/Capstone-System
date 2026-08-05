@@ -9,7 +9,7 @@ type ThemeProviderState = {
     setTheme: (theme: Theme) => void;
 };
 
-const STORAGE_KEY = 'mtbdrs-theme';
+const STORAGE_KEY = 'doculink-theme';
 
 const ThemeProviderContext = React.createContext<ThemeProviderState | undefined>(undefined);
 
