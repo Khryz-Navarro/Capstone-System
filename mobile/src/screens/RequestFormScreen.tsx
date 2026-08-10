@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { createRequest, getDocumentTypes, getProfile } from '../services/api';
 import { TabName } from '../components/BottomTabBar';
+import { useTheme } from '../theme/ThemeContext';
 
 interface RequestFormScreenProps {
   onNavigate: (tab: TabName) => void;
@@ -27,6 +28,7 @@ export default function RequestFormScreen({ onNavigate }: RequestFormScreenProps
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const { colors } = useTheme();
 
   // Step 1 — Personal Info
   const [fullName, setFullName] = useState('');
@@ -96,25 +98,25 @@ export default function RequestFormScreen({ onNavigate }: RequestFormScreenProps
 
   if (loading) {
     return (
-      <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#C9A227" />
+      <View style={[styles.loader, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.headerBg }]}>
         <View style={styles.headerLogoRow}>
-          <View style={styles.logoIcon}>
-            <Text style={styles.logoText}>⌂</Text>
+          <View style={[styles.logoIcon, { backgroundColor: colors.primary }]}>
+            <Text style={[styles.logoText, { color: colors.headerText }]}>⌂</Text>
           </View>
-          <Text style={styles.logoTitle}>Barangay Connect</Text>
+          <Text style={[styles.logoTitle, { color: colors.headerText }]}>Barangay Connect</Text>
         </View>
         {profile && (
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{(profile.name ?? 'R').charAt(0).toUpperCase()}</Text>
+          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+            <Text style={[styles.avatarText, { color: colors.headerBg }]}>{(profile.name ?? 'R').charAt(0).toUpperCase()}</Text>
           </View>
         )}
       </View>
@@ -128,8 +130,8 @@ export default function RequestFormScreen({ onNavigate }: RequestFormScreenProps
         >
           {/* Page Title */}
           <View style={styles.titleBlock}>
-            <Text style={styles.titleMain}>Request Barangay Clearance</Text>
-            <Text style={styles.titleSub}>Complete the steps below to apply for your official document. Processing usually takes 1-3 business days.</Text>
+            <Text style={[styles.titleMain, { color: colors.text }]}>Request Barangay Clearance</Text>
+            <Text style={[styles.titleSub, { color: colors.textSecondary }]}>Complete the steps below to apply for your official document. Processing usually takes 1-3 business days.</Text>
           </View>
 
           {/* Step Indicator */}
@@ -139,15 +141,29 @@ export default function RequestFormScreen({ onNavigate }: RequestFormScreenProps
               const active = i === currentStep;
               return (
                 <View key={label} style={styles.stepIndicatorItem}>
-                  <View style={[styles.stepCircle, done && styles.stepCircleDone, active && styles.stepCircleActive]}>
+                  <View style={[
+                    styles.stepCircle,
+                    { backgroundColor: colors.card, borderColor: colors.border },
+                    done && { backgroundColor: colors.success, borderColor: colors.success },
+                    active && { backgroundColor: colors.primary, borderColor: colors.primary }
+                  ]}>
                     {done ? (
-                      <Text style={styles.stepCircleCheck}>✓</Text>
+                      <Text style={[styles.stepCircleCheck, { color: colors.headerText }]}>✓</Text>
                     ) : (
-                      <Text style={[styles.stepCircleNum, active && styles.stepCircleNumActive]}>{i + 1}</Text>
+                      <Text style={[
+                        styles.stepCircleNum,
+                        { color: colors.textMuted },
+                        active && { color: colors.headerText }
+                      ]}>{i + 1}</Text>
                     )}
                   </View>
-                  <Text style={[styles.stepLabel, active && styles.stepLabelActive, done && styles.stepLabelDone]}>{label}</Text>
-                  {i < STEPS.length - 1 && <View style={[styles.stepConnector, done && styles.stepConnectorDone]} />}
+                  <Text style={[
+                    styles.stepLabel,
+                    { color: colors.textMuted },
+                    active && { color: colors.primary, fontWeight: '700' },
+                    done && { color: colors.success }
+                  ]}>{label}</Text>
+                  {i < STEPS.length - 1 && <View style={[styles.stepConnector, { backgroundColor: colors.borderLight }, done && { backgroundColor: colors.success }]} />}
                 </View>
               );
             })}
@@ -155,24 +171,24 @@ export default function RequestFormScreen({ onNavigate }: RequestFormScreenProps
 
           {/* Step 1: Personal Info */}
           {currentStep === 0 && (
-            <View style={styles.formCard}>
-              <Text style={styles.formSectionTitle}>Personal Information</Text>
+            <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.formSectionTitle, { color: colors.text }]}>Personal Information</Text>
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Full Name</Text>
+                <Text style={[styles.formLabel, { color: colors.textSecondary }]}>Full Name</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
                   placeholder="Juan Dela Cruz"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.textMuted}
                   value={fullName}
                   onChangeText={setFullName}
                 />
               </View>
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Residential Address</Text>
+                <Text style={[styles.formLabel, { color: colors.textSecondary }]}>Residential Address</Text>
                 <TextInput
-                  style={[styles.input, styles.textArea]}
+                  style={[styles.input, styles.textArea, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
                   placeholder="House No., Street, Barangay, City/Municipality"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.textMuted}
                   value={address}
                   onChangeText={setAddress}
                   multiline
@@ -180,11 +196,11 @@ export default function RequestFormScreen({ onNavigate }: RequestFormScreenProps
                 />
               </View>
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Date of Birth</Text>
+                <Text style={[styles.formLabel, { color: colors.textSecondary }]}>Date of Birth</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
                   placeholder="mm/dd/yyyy"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.textMuted}
                   value={dateOfBirth}
                   onChangeText={setDateOfBirth}
                   keyboardType="numbers-and-punctuation"
@@ -195,27 +211,30 @@ export default function RequestFormScreen({ onNavigate }: RequestFormScreenProps
 
           {/* Step 2: Purpose */}
           {currentStep === 1 && (
-            <View style={styles.formCard}>
-              <Text style={styles.formSectionTitle}>Document Type & Purpose</Text>
-
+            <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.formSectionTitle, { color: colors.text }]}>Document Type & Purpose</Text>
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Select Document Type</Text>
+                <Text style={[styles.formLabel, { color: colors.textSecondary }]}>Select Document Type</Text>
                 <View style={styles.docTypeList}>
                   {documentTypes.map((type) => (
                     <Pressable
                       key={type.id}
-                      style={[styles.docTypeOption, selectedTypeId === type.id && styles.docTypeOptionSelected]}
+                      style={[
+                        styles.docTypeOption,
+                        { borderColor: colors.borderLight, backgroundColor: colors.inputBg },
+                        selectedTypeId === type.id && { borderColor: colors.primary, backgroundColor: colors.warningBg }
+                      ]}
                       onPress={() => setSelectedTypeId(type.id)}
                     >
-                      <View style={[styles.radioCircle, selectedTypeId === type.id && styles.radioCircleSelected]}>
-                        {selectedTypeId === type.id && <View style={styles.radioDot} />}
+                      <View style={[styles.radioCircle, { borderColor: colors.border }, selectedTypeId === type.id && { borderColor: colors.primary }]}>
+                        {selectedTypeId === type.id && <View style={[styles.radioDot, { backgroundColor: colors.primary }]} />}
                       </View>
                       <View style={styles.docTypeText}>
-                        <Text style={[styles.docTypeName, selectedTypeId === type.id && styles.docTypeNameSelected]}>
+                        <Text style={[styles.docTypeName, { color: colors.text }, selectedTypeId === type.id && { color: colors.primary }]}>
                           {type.name}
                         </Text>
                         {type.description && (
-                          <Text style={styles.docTypeDesc}>{type.description}</Text>
+                          <Text style={[styles.docTypeDesc, { color: colors.textMuted }]}>{type.description}</Text>
                         )}
                       </View>
                     </Pressable>
@@ -224,11 +243,11 @@ export default function RequestFormScreen({ onNavigate }: RequestFormScreenProps
               </View>
 
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Purpose of Request</Text>
+                <Text style={[styles.formLabel, { color: colors.textSecondary }]}>Purpose of Request</Text>
                 <TextInput
-                  style={[styles.input, styles.textArea]}
+                  style={[styles.input, styles.textArea, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
                   placeholder="e.g. For employment, for scholarship application..."
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.textMuted}
                   value={purpose}
                   onChangeText={setPurpose}
                   multiline
@@ -240,52 +259,52 @@ export default function RequestFormScreen({ onNavigate }: RequestFormScreenProps
 
           {/* Step 3: Notifications */}
           {currentStep === 2 && (
-            <View style={styles.formCard}>
-              <Text style={styles.formSectionTitle}>Notification Preferences</Text>
-              <Text style={styles.formSubtext}>How would you like to be notified about your request?</Text>
+            <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.formSectionTitle, { color: colors.text }]}>Notification Preferences</Text>
+              <Text style={[styles.formSubtext, { color: colors.textSecondary }]}>How would you like to be notified about your request?</Text>
 
-              <Pressable style={styles.toggleRow} onPress={() => setNotifyEmail((v) => !v)}>
+              <Pressable style={[styles.toggleRow, { borderBottomColor: colors.borderLight }]} onPress={() => setNotifyEmail((v) => !v)}>
                 <View style={styles.toggleInfo}>
                   <Text style={styles.toggleIcon}>📧</Text>
                   <View>
-                    <Text style={styles.toggleLabel}>Email Notifications</Text>
-                    <Text style={styles.toggleDesc}>Get updates sent to your email</Text>
+                    <Text style={[styles.toggleLabel, { color: colors.text }]}>Email Notifications</Text>
+                    <Text style={[styles.toggleDesc, { color: colors.textMuted }]}>Get updates sent to your email</Text>
                   </View>
                 </View>
-                <View style={[styles.toggle, notifyEmail && styles.toggleOn]}>
-                  <View style={[styles.toggleThumb, notifyEmail && styles.toggleThumbOn]} />
+                <View style={[styles.toggle, { backgroundColor: colors.border }, notifyEmail && { backgroundColor: colors.primary }]}>
+                  <View style={[styles.toggleThumb, { backgroundColor: colors.headerText }, notifyEmail && styles.toggleThumbOn]} />
                 </View>
               </Pressable>
 
-              <Pressable style={styles.toggleRow} onPress={() => setNotifySms((v) => !v)}>
+              <Pressable style={[styles.toggleRow, { borderBottomColor: 'transparent' }]} onPress={() => setNotifySms((v) => !v)}>
                 <View style={styles.toggleInfo}>
                   <Text style={styles.toggleIcon}>📱</Text>
                   <View>
-                    <Text style={styles.toggleLabel}>SMS Notifications</Text>
-                    <Text style={styles.toggleDesc}>Receive text message updates</Text>
+                    <Text style={[styles.toggleLabel, { color: colors.text }]}>SMS Notifications</Text>
+                    <Text style={[styles.toggleDesc, { color: colors.textMuted }]}>Receive text message updates</Text>
                   </View>
                 </View>
-                <View style={[styles.toggle, notifySms && styles.toggleOn]}>
-                  <View style={[styles.toggleThumb, notifySms && styles.toggleThumbOn]} />
+                <View style={[styles.toggle, { backgroundColor: colors.border }, notifySms && { backgroundColor: colors.primary }]}>
+                  <View style={[styles.toggleThumb, { backgroundColor: colors.headerText }, notifySms && styles.toggleThumbOn]} />
                 </View>
               </Pressable>
 
               {/* Summary */}
-              <View style={styles.summaryCard}>
-                <Text style={styles.summaryTitle}>Request Summary</Text>
+              <View style={[styles.summaryCard, { backgroundColor: colors.inputBg, borderColor: colors.borderLight }]}>
+                <Text style={[styles.summaryTitle, { color: colors.text }]}>Request Summary</Text>
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryKey}>Document</Text>
-                  <Text style={styles.summaryValue}>
+                  <Text style={[styles.summaryKey, { color: colors.textMuted }]}>Document</Text>
+                  <Text style={[styles.summaryValue, { color: colors.text }]}>
                     {documentTypes.find((t) => t.id === selectedTypeId)?.name ?? '—'}
                   </Text>
                 </View>
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryKey}>Applicant</Text>
-                  <Text style={styles.summaryValue}>{fullName}</Text>
+                  <Text style={[styles.summaryKey, { color: colors.textMuted }]}>Applicant</Text>
+                  <Text style={[styles.summaryValue, { color: colors.text }]}>{fullName}</Text>
                 </View>
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryKey}>Purpose</Text>
-                  <Text style={styles.summaryValue}>{purpose || '—'}</Text>
+                  <Text style={[styles.summaryKey, { color: colors.textMuted }]}>Purpose</Text>
+                  <Text style={[styles.summaryValue, { color: colors.text }]}>{purpose || '—'}</Text>
                 </View>
               </View>
             </View>
@@ -294,20 +313,20 @@ export default function RequestFormScreen({ onNavigate }: RequestFormScreenProps
           {/* Navigation Buttons */}
           <View style={styles.navRow}>
             {currentStep > 0 && (
-              <Pressable style={styles.backBtn} onPress={handleBack}>
-                <Text style={styles.backBtnText}>← Back</Text>
+              <Pressable style={[styles.backBtn, { borderColor: colors.border, backgroundColor: colors.card }]} onPress={handleBack}>
+                <Text style={[styles.backBtnText, { color: colors.text }]}>← Back</Text>
               </Pressable>
             )}
             {currentStep < STEPS.length - 1 ? (
-              <Pressable style={styles.nextBtn} onPress={handleNext}>
-                <Text style={styles.nextBtnText}>Next Step →</Text>
+              <Pressable style={[styles.nextBtn, { backgroundColor: colors.primary }]} onPress={handleNext}>
+                <Text style={[styles.nextBtnText, { color: colors.headerText }]}>Next Step →</Text>
               </Pressable>
             ) : (
-              <Pressable style={[styles.nextBtn, submitting && styles.nextBtnDisabled]} onPress={handleSubmit} disabled={submitting}>
+              <Pressable style={[styles.nextBtn, { backgroundColor: colors.primary }, submitting && styles.nextBtnDisabled]} onPress={handleSubmit} disabled={submitting}>
                 {submitting ? (
-                  <ActivityIndicator color="#fff" />
+                  <ActivityIndicator color={colors.headerText} />
                 ) : (
-                  <Text style={styles.nextBtnText}>Submit Request</Text>
+                  <Text style={[styles.nextBtnText, { color: colors.headerText }]}>Submit Request</Text>
                 )}
               </Pressable>
             )}
@@ -319,11 +338,10 @@ export default function RequestFormScreen({ onNavigate }: RequestFormScreenProps
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F5F6FA' },
+  root: { flex: 1 },
   flex: { flex: 1 },
-  loader: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F5F6FA' },
+  loader: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
-    backgroundColor: '#1a1a2e',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -334,106 +352,97 @@ const styles = StyleSheet.create({
   headerLogoRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   logoIcon: {
     width: 28, height: 28, borderRadius: 6,
-    backgroundColor: '#C9A227', alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
   },
-  logoText: { color: '#fff', fontSize: 14 },
-  logoTitle: { color: '#FFFFFF', fontWeight: '700', fontSize: 15 },
+  logoText: { fontSize: 14 },
+  logoTitle: { fontWeight: '700', fontSize: 15 },
   avatar: {
     width: 32, height: 32, borderRadius: 16,
-    backgroundColor: '#C9A227', alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
   },
-  avatarText: { color: '#1a1a2e', fontWeight: '700', fontSize: 14 },
+  avatarText: { fontWeight: '700', fontSize: 14 },
   scroll: { flex: 1 },
   content: { padding: 20, gap: 16, paddingBottom: 40 },
   titleBlock: { gap: 4 },
-  titleMain: { fontSize: 18, fontWeight: '800', color: '#0D1B2A' },
-  titleSub: { fontSize: 13, color: '#6B7280', lineHeight: 18 },
+  titleMain: { fontSize: 18, fontWeight: '800' },
+  titleSub: { fontSize: 13, lineHeight: 18 },
   stepIndicator: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 0 },
   stepIndicatorItem: { flexDirection: 'row', alignItems: 'center' },
   stepCircle: {
     width: 28, height: 28, borderRadius: 14,
-    backgroundColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2, borderColor: '#D1D5DB',
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2,
   },
-  stepCircleDone: { backgroundColor: '#22C55E', borderColor: '#22C55E' },
-  stepCircleActive: { backgroundColor: '#C9A227', borderColor: '#C9A227' },
-  stepCircleCheck: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  stepCircleNum: { color: '#9CA3AF', fontSize: 12, fontWeight: '700' },
-  stepCircleNumActive: { color: '#fff' },
-  stepLabel: { fontSize: 9, color: '#9CA3AF', marginLeft: 4, marginRight: 2, fontWeight: '500' },
-  stepLabelActive: { color: '#C9A227', fontWeight: '700' },
-  stepLabelDone: { color: '#22C55E' },
-  stepConnector: { width: 20, height: 2, backgroundColor: '#E5E7EB', marginHorizontal: 2 },
-  stepConnectorDone: { backgroundColor: '#22C55E' },
+  stepCircleCheck: { fontSize: 12, fontWeight: '700' },
+  stepCircleNum: { fontSize: 12, fontWeight: '700' },
+  stepLabel: { fontSize: 9, marginLeft: 4, marginRight: 2, fontWeight: '500' },
+  stepConnector: { width: 20, height: 2, marginHorizontal: 2 },
   formCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, gap: 14,
-    borderWidth: 1, borderColor: '#E5E7EB',
-    shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6, elevation: 2,
+    borderRadius: 16, padding: 16, gap: 14,
+    borderWidth: 1,
+    shadowOpacity: 0.04, shadowRadius: 6, elevation: 2,
   },
-  formSectionTitle: { fontSize: 15, fontWeight: '800', color: '#0D1B2A' },
-  formSubtext: { fontSize: 13, color: '#6B7280' },
+  formSectionTitle: { fontSize: 15, fontWeight: '800' },
+  formSubtext: { fontSize: 13 },
   formGroup: { gap: 6 },
-  formLabel: { fontSize: 13, fontWeight: '600', color: '#374151' },
+  formLabel: { fontSize: 13, fontWeight: '600' },
   input: {
-    borderWidth: 1, borderColor: '#D1D5DB', borderRadius: 10,
+    borderWidth: 1, borderRadius: 10,
     paddingHorizontal: 12, paddingVertical: 11,
-    fontSize: 14, color: '#0D1B2A', backgroundColor: '#F9FAFB',
+    fontSize: 14,
   },
   textArea: { minHeight: 80, textAlignVertical: 'top' },
   docTypeList: { gap: 8 },
   docTypeOption: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 10,
-    borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12,
-    padding: 12, backgroundColor: '#F9FAFB',
+    borderWidth: 1, borderRadius: 12,
+    padding: 12,
   },
-  docTypeOptionSelected: { borderColor: '#C9A227', backgroundColor: '#FFFBEB' },
   radioCircle: {
     width: 20, height: 20, borderRadius: 10,
-    borderWidth: 2, borderColor: '#D1D5DB',
+    borderWidth: 2,
     alignItems: 'center', justifyContent: 'center', marginTop: 1,
   },
-  radioCircleSelected: { borderColor: '#C9A227' },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#C9A227' },
+  radioDot: { width: 10, height: 10, borderRadius: 5 },
   docTypeText: { flex: 1 },
-  docTypeName: { fontSize: 14, fontWeight: '600', color: '#0D1B2A' },
-  docTypeNameSelected: { color: '#C9A227' },
-  docTypeDesc: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
+  docTypeName: { fontSize: 14, fontWeight: '600' },
+  docTypeDesc: { fontSize: 12, marginTop: 2 },
   toggleRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
+    paddingVertical: 10, borderBottomWidth: 1,
   },
   toggleInfo: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   toggleIcon: { fontSize: 20 },
-  toggleLabel: { fontSize: 14, fontWeight: '600', color: '#0D1B2A' },
-  toggleDesc: { fontSize: 11, color: '#9CA3AF' },
+  toggleLabel: { fontSize: 14, fontWeight: '600' },
+  toggleDesc: { fontSize: 11 },
   toggle: {
-    width: 44, height: 24, borderRadius: 12, backgroundColor: '#E5E7EB',
+    width: 44, height: 24, borderRadius: 12,
     justifyContent: 'center', paddingHorizontal: 2,
   },
-  toggleOn: { backgroundColor: '#C9A227' },
   toggleThumb: {
-    width: 20, height: 20, borderRadius: 10, backgroundColor: '#FFFFFF',
+    width: 20, height: 20, borderRadius: 10,
     shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 2, elevation: 2,
   },
   toggleThumbOn: { alignSelf: 'flex-end' },
   summaryCard: {
-    backgroundColor: '#F9FAFB', borderRadius: 12, padding: 14, gap: 8,
-    borderWidth: 1, borderColor: '#E5E7EB',
+    borderRadius: 12, padding: 14, gap: 8,
+    borderWidth: 1,
   },
-  summaryTitle: { fontSize: 13, fontWeight: '700', color: '#374151', marginBottom: 2 },
+  summaryTitle: { fontSize: 13, fontWeight: '700', marginBottom: 2 },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  summaryKey: { fontSize: 12, color: '#9CA3AF', fontWeight: '500' },
-  summaryValue: { fontSize: 12, color: '#0D1B2A', fontWeight: '600', flex: 1, textAlign: 'right' },
+  summaryKey: { fontSize: 12, fontWeight: '500' },
+  summaryValue: { fontSize: 12, fontWeight: '600', flex: 1, textAlign: 'right' },
   navRow: { flexDirection: 'row', gap: 10 },
   backBtn: {
-    flex: 1, borderWidth: 1, borderColor: '#D1D5DB', borderRadius: 12,
-    paddingVertical: 13, alignItems: 'center', backgroundColor: '#FFFFFF',
+    flex: 1, borderWidth: 1, borderRadius: 12,
+    paddingVertical: 13, alignItems: 'center',
   },
-  backBtnText: { color: '#374151', fontWeight: '600', fontSize: 14 },
+  backBtnText: { fontWeight: '600', fontSize: 14 },
   nextBtn: {
-    flex: 2, backgroundColor: '#C9A227', borderRadius: 12,
+    flex: 2, borderRadius: 12,
     paddingVertical: 13, alignItems: 'center',
   },
   nextBtnDisabled: { opacity: 0.7 },
-  nextBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  nextBtnText: { fontWeight: '700', fontSize: 14 },
 });
+
