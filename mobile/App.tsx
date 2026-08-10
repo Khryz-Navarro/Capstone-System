@@ -9,10 +9,12 @@ import TrackingScreen from './src/screens/TrackingScreen';
 import RequestFormScreen from './src/screens/RequestFormScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import BottomTabBar, { TabName } from './src/components/BottomTabBar';
+import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
 
-export default function App() {
+function MainApp() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [activeTab, setActiveTab] = useState<TabName>('home');
+  const { theme, colors } = useTheme();
 
   useEffect(() => {
     async function bootstrap() {
@@ -29,7 +31,7 @@ export default function App() {
   if (!authenticated) {
     return (
       <>
-        <StatusBar style="light" />
+        <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
         <AuthScreen onAuthenticated={() => setAuthenticated(true)} />
       </>
     );
@@ -54,8 +56,8 @@ export default function App() {
 
   return (
     <>
-      <StatusBar style="light" />
-      <View style={styles.container}>
+      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.screen}>{renderScreen()}</View>
         <BottomTabBar activeTab={activeTab} onTabPress={setActiveTab} />
       </View>
@@ -63,7 +65,15 @@ export default function App() {
   );
 }
 
+export default function App() {
+  return (
+    <ThemeProvider>
+      <MainApp />
+    </ThemeProvider>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1a1a2e' },
+  container: { flex: 1 },
   screen: { flex: 1 },
 });

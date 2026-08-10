@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { createRequest, getDocumentTypes, getProfile, listRequests, logoutUser } from '../services/api';
+import { useTheme } from '../theme/ThemeContext';
 
 export default function DashboardScreen({ onLogout }: { onLogout: () => void }) {
   const [profile, setProfile] = useState<any>(null);
   const [documentTypes, setDocumentTypes] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { colors } = useTheme();
 
   useEffect(() => {
     loadData();
@@ -41,39 +43,39 @@ export default function DashboardScreen({ onLogout }: { onLogout: () => void }) 
   }
 
   if (loading) {
-    return <View style={styles.center}><ActivityIndicator size="large" /></View>;
+    return <View style={[styles.center, { backgroundColor: colors.background }]}><ActivityIndicator size="large" color={colors.primary} /></View>;
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.headerRow}>
         <View>
-          <Text style={styles.greeting}>Welcome</Text>
-          <Text style={styles.name}>{profile?.name || 'Resident'}</Text>
+          <Text style={[styles.greeting, { color: colors.textSecondary }]}>Welcome</Text>
+          <Text style={[styles.name, { color: colors.text }]}>{profile?.name || 'Resident'}</Text>
         </View>
-        <Pressable style={styles.outlineButton} onPress={handleLogout}>
-          <Text style={styles.outlineText}>Logout</Text>
+        <Pressable style={[styles.outlineButton, { borderColor: colors.border }]} onPress={handleLogout}>
+          <Text style={[styles.outlineText, { color: colors.text }]}>Logout</Text>
         </Pressable>
       </View>
 
-      <Text style={styles.sectionTitle}>Available documents</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Available documents</Text>
       <View style={styles.cardList}>
         {documentTypes.map((type) => (
-          <Pressable key={type.id} style={styles.card} onPress={() => submitRequest(type.id)}>
-            <Text style={styles.cardTitle}>{type.name}</Text>
-            <Text style={styles.cardText}>{type.description || 'Request this document'}</Text>
+          <Pressable key={type.id} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => submitRequest(type.id)}>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>{type.name}</Text>
+            <Text style={[styles.cardText, { color: colors.textSecondary }]}>{type.description || 'Request this document'}</Text>
           </Pressable>
         ))}
       </View>
 
-      <Text style={styles.sectionTitle}>Recent requests</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent requests</Text>
       <FlatList
         data={requests}
         keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => (
-          <View style={styles.requestItem}>
-            <Text style={styles.requestTitle}>{item.document_type?.name || 'Request'}</Text>
-            <Text style={styles.requestStatus}>{item.status_label}</Text>
+          <View style={[styles.requestItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.requestTitle, { color: colors.text }]}>{item.document_type?.name || 'Request'}</Text>
+            <Text style={[styles.requestStatus, { color: colors.primary }]}>{item.status_label}</Text>
           </View>
         )}
         contentContainerStyle={{ paddingBottom: 24 }}
@@ -83,19 +85,19 @@ export default function DashboardScreen({ onLogout }: { onLogout: () => void }) 
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f7fb', padding: 20, gap: 12 },
+  container: { flex: 1, padding: 20, gap: 12 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  greeting: { color: '#64748b', fontSize: 14 },
-  name: { color: '#0f172a', fontSize: 22, fontWeight: '700' },
-  outlineButton: { borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
-  outlineText: { color: '#334155' },
-  sectionTitle: { fontWeight: '700', color: '#0f172a', fontSize: 16, marginTop: 4 },
+  greeting: { fontSize: 14 },
+  name: { fontSize: 22, fontWeight: '700' },
+  outlineButton: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
+  outlineText: { },
+  sectionTitle: { fontWeight: '700', fontSize: 16, marginTop: 4 },
   cardList: { gap: 10 },
-  card: { backgroundColor: '#fff', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#e2e8f0' },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: '#0f172a' },
-  cardText: { color: '#64748b', marginTop: 4 },
-  requestItem: { backgroundColor: '#fff', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#e2e8f0', marginBottom: 8 },
-  requestTitle: { fontWeight: '600', color: '#0f172a' },
-  requestStatus: { color: '#2563eb', marginTop: 4 },
+  card: { borderRadius: 12, padding: 14, borderWidth: 1 },
+  cardTitle: { fontSize: 16, fontWeight: '700' },
+  cardText: { marginTop: 4 },
+  requestItem: { borderRadius: 12, padding: 14, borderWidth: 1, marginBottom: 8 },
+  requestTitle: { fontWeight: '600' },
+  requestStatus: { marginTop: 4 },
 });

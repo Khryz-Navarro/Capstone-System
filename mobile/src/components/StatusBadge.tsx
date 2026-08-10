@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 
 type StatusType = 'pending' | 'processing' | 'approved' | 'completed' | 'cancelled' | 'ready' | string;
 
@@ -8,7 +9,7 @@ interface StatusBadgeProps {
   label?: string;
 }
 
-const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string }> = {
+const LIGHT_CONFIG: Record<string, { bg: string; text: string; dot: string }> = {
   pending: { bg: '#FEF3C7', text: '#92400E', dot: '#F59E0B' },
   processing: { bg: '#DBEAFE', text: '#1E40AF', dot: '#3B82F6' },
   approved: { bg: '#D1FAE5', text: '#065F46', dot: '#10B981' },
@@ -18,9 +19,23 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string }> =
   default: { bg: '#F3F4F6', text: '#374151', dot: '#9CA3AF' },
 };
 
+const DARK_CONFIG: Record<string, { bg: string; text: string; dot: string }> = {
+  pending: { bg: '#78350F', text: '#FEF3C7', dot: '#F59E0B' },
+  processing: { bg: '#1E3A8A', text: '#DBEAFE', dot: '#3B82F6' },
+  approved: { bg: '#064E3B', text: '#D1FAE5', dot: '#10B981' },
+  completed: { bg: '#064E3B', text: '#D1FAE5', dot: '#10B981' },
+  ready: { bg: '#064E3B', text: '#D1FAE5', dot: '#22C55E' },
+  cancelled: { bg: '#7F1D1D', text: '#FEE2E2', dot: '#EF4444' },
+  default: { bg: '#374151', text: '#F3F4F6', dot: '#9CA3AF' },
+};
+
 export default function StatusBadge({ status, label }: StatusBadgeProps) {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+  const CONFIG = isDark ? DARK_CONFIG : LIGHT_CONFIG;
+  
   const key = status?.toLowerCase() ?? 'default';
-  const config = STATUS_CONFIG[key] ?? STATUS_CONFIG.default;
+  const config = CONFIG[key] ?? CONFIG.default;
 
   return (
     <View style={[styles.badge, { backgroundColor: config.bg }]}>

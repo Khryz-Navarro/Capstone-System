@@ -7,8 +7,10 @@ import {
   StyleSheet,
   Text,
   View,
+  Switch,
 } from 'react-native';
 import { getProfile, logoutUser } from '../services/api';
+import { useTheme } from '../theme/ThemeContext';
 
 interface ProfileScreenProps {
   onLogout: () => void;
@@ -17,6 +19,7 @@ interface ProfileScreenProps {
 export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { theme, colors, toggleTheme } = useTheme();
 
   useEffect(() => {
     getProfile()
@@ -41,8 +44,8 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
 
   if (loading) {
     return (
-      <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#C9A227" />
+      <View style={[styles.loader, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -54,35 +57,35 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
     .join('');
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.headerBg }]}>
         <View style={styles.headerLogoRow}>
-          <View style={styles.logoIcon}>
-            <Text style={styles.logoText}>⌂</Text>
+          <View style={[styles.logoIcon, { backgroundColor: colors.primary }]}>
+            <Text style={[styles.logoText, { color: colors.headerText }]}>⌂</Text>
           </View>
-          <Text style={styles.logoTitle}>Barangay Connect</Text>
+          <Text style={[styles.logoTitle, { color: colors.headerText }]}>Barangay Connect</Text>
         </View>
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Avatar */}
         <View style={styles.avatarSection}>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarText}>{initials}</Text>
+          <View style={[styles.avatarCircle, { backgroundColor: colors.headerBg, borderColor: colors.primary }]}>
+            <Text style={[styles.avatarText, { color: colors.primary }]}>{initials}</Text>
           </View>
-          <Text style={styles.profileName}>{profile?.name ?? 'Resident'}</Text>
-          <Text style={styles.profileEmail}>{profile?.email ?? ''}</Text>
+          <Text style={[styles.profileName, { color: colors.text }]}>{profile?.name ?? 'Resident'}</Text>
+          <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>{profile?.email ?? ''}</Text>
           {profile?.barangay?.name && (
-            <View style={styles.barangayBadge}>
-              <Text style={styles.barangayText}>📍 {profile.barangay.name}</Text>
+            <View style={[styles.barangayBadge, { backgroundColor: colors.warningBg }]}>
+              <Text style={[styles.barangayText, { color: colors.warningText }]}>📍 {profile.barangay.name}</Text>
             </View>
           )}
         </View>
 
         {/* Info Card */}
-        <View style={styles.infoCard}>
-          <Text style={styles.infoCardTitle}>Account Information</Text>
+        <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.infoCardTitle, { color: colors.text }]}>Account Information</Text>
           {[
             { label: 'Full Name', value: profile?.name },
             { label: 'Email', value: profile?.email },
@@ -93,45 +96,55 @@ export default function ProfileScreen({ onLogout }: ProfileScreenProps) {
           ]
             .filter((row) => row.value)
             .map((row) => (
-              <View key={row.label} style={styles.infoRow}>
-                <Text style={styles.infoLabel}>{row.label}</Text>
-                <Text style={styles.infoValue}>{row.value}</Text>
+              <View key={row.label} style={[styles.infoRow, { borderBottomColor: colors.borderLight }]}>
+                <Text style={[styles.infoLabel, { color: colors.textMuted }]}>{row.label}</Text>
+                <Text style={[styles.infoValue, { color: colors.text }]}>{row.value}</Text>
               </View>
             ))}
         </View>
 
         {/* Menu Items */}
-        <View style={styles.menuCard}>
+        <View style={[styles.menuCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.menuItem, { borderBottomColor: colors.borderLight }]}>
+            <Text style={styles.menuIcon}>🌙</Text>
+            <Text style={[styles.menuLabel, { color: colors.text }]}>Dark Mode</Text>
+            <Switch
+              value={theme === 'dark'}
+              onValueChange={toggleTheme}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+
           {[
             { icon: '🔔', label: 'Notifications' },
             { icon: '🔒', label: 'Change Password' },
             { icon: '❓', label: 'Help & Support' },
             { icon: '📜', label: 'Terms & Privacy' },
-          ].map((item) => (
-            <Pressable key={item.label} style={styles.menuItem}>
+          ].map((item, index) => (
+            <Pressable key={item.label} style={[styles.menuItem, index !== 3 && { borderBottomColor: colors.borderLight }]}>
               <Text style={styles.menuIcon}>{item.icon}</Text>
-              <Text style={styles.menuLabel}>{item.label}</Text>
-              <Text style={styles.menuArrow}>›</Text>
+              <Text style={[styles.menuLabel, { color: colors.text }]}>{item.label}</Text>
+              <Text style={[styles.menuArrow, { color: colors.border }]}>›</Text>
             </Pressable>
           ))}
         </View>
 
         {/* Logout */}
-        <Pressable style={styles.logoutBtn} onPress={handleLogout}>
-          <Text style={styles.logoutText}>Sign Out</Text>
+        <Pressable style={[styles.logoutBtn, { backgroundColor: colors.dangerBg, borderColor: colors.dangerBorder }]} onPress={handleLogout}>
+          <Text style={[styles.logoutText, { color: colors.danger }]}>Sign Out</Text>
         </Pressable>
 
-        <Text style={styles.version}>Barangay Connect v1.0.0</Text>
+        <Text style={[styles.version, { color: colors.borderLight }]}>Barangay Connect v1.0.0</Text>
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F5F6FA' },
-  loader: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F5F6FA' },
+  root: { flex: 1 },
+  loader: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
-    backgroundColor: '#1a1a2e',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
@@ -141,52 +154,52 @@ const styles = StyleSheet.create({
   headerLogoRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   logoIcon: {
     width: 28, height: 28, borderRadius: 6,
-    backgroundColor: '#C9A227', alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
   },
-  logoText: { color: '#fff', fontSize: 14 },
-  logoTitle: { color: '#FFFFFF', fontWeight: '700', fontSize: 15 },
+  logoText: { fontSize: 14 },
+  logoTitle: { fontWeight: '700', fontSize: 15 },
   scroll: { flex: 1 },
   content: { padding: 20, gap: 16, paddingBottom: 40, alignItems: 'stretch' },
   avatarSection: { alignItems: 'center', gap: 6, paddingVertical: 12 },
   avatarCircle: {
     width: 72, height: 72, borderRadius: 36,
-    backgroundColor: '#1a1a2e', alignItems: 'center', justifyContent: 'center',
-    borderWidth: 3, borderColor: '#C9A227',
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 3,
   },
-  avatarText: { color: '#C9A227', fontSize: 26, fontWeight: '800' },
-  profileName: { fontSize: 20, fontWeight: '800', color: '#0D1B2A' },
-  profileEmail: { fontSize: 13, color: '#6B7280' },
+  avatarText: { fontSize: 26, fontWeight: '800' },
+  profileName: { fontSize: 20, fontWeight: '800' },
+  profileEmail: { fontSize: 13 },
   barangayBadge: {
-    backgroundColor: '#FEF3C7', paddingHorizontal: 12, paddingVertical: 4,
+    paddingHorizontal: 12, paddingVertical: 4,
     borderRadius: 999, marginTop: 2,
   },
-  barangayText: { fontSize: 12, color: '#92400E', fontWeight: '600' },
+  barangayText: { fontSize: 12, fontWeight: '600' },
   infoCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, gap: 12,
-    borderWidth: 1, borderColor: '#E5E7EB',
+    borderRadius: 16, padding: 16, gap: 12,
+    borderWidth: 1,
   },
-  infoCardTitle: { fontSize: 14, fontWeight: '700', color: '#0D1B2A', marginBottom: 2 },
+  infoCardTitle: { fontSize: 14, fontWeight: '700', marginBottom: 2 },
   infoRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
+    paddingVertical: 6, borderBottomWidth: 1,
   },
-  infoLabel: { fontSize: 13, color: '#9CA3AF', fontWeight: '500' },
-  infoValue: { fontSize: 13, color: '#0D1B2A', fontWeight: '600', flex: 1, textAlign: 'right' },
+  infoLabel: { fontSize: 13, fontWeight: '500' },
+  infoValue: { fontSize: 13, fontWeight: '600', flex: 1, textAlign: 'right' },
   menuCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 16,
-    borderWidth: 1, borderColor: '#E5E7EB', overflow: 'hidden',
+    borderRadius: 16,
+    borderWidth: 1, overflow: 'hidden',
   },
   menuItem: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: '#F3F4F6', gap: 12,
+    borderBottomWidth: 1, gap: 12,
   },
   menuIcon: { fontSize: 18 },
-  menuLabel: { flex: 1, fontSize: 14, color: '#0D1B2A', fontWeight: '500' },
-  menuArrow: { fontSize: 18, color: '#D1D5DB' },
+  menuLabel: { flex: 1, fontSize: 14, fontWeight: '500' },
+  menuArrow: { fontSize: 18 },
   logoutBtn: {
-    backgroundColor: '#FEF2F2', borderRadius: 12, paddingVertical: 14,
-    alignItems: 'center', borderWidth: 1, borderColor: '#FECACA',
+    borderRadius: 12, paddingVertical: 14,
+    alignItems: 'center', borderWidth: 1,
   },
-  logoutText: { color: '#DC2626', fontWeight: '700', fontSize: 15 },
-  version: { textAlign: 'center', fontSize: 11, color: '#D1D5DB' },
+  logoutText: { fontWeight: '700', fontSize: 15 },
+  version: { textAlign: 'center', fontSize: 11 },
 });

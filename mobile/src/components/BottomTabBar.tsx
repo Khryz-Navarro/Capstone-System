@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 
 export type TabName = 'home' | 'documents' | 'tracking' | 'request' | 'profile';
 
@@ -23,8 +24,10 @@ interface BottomTabBarProps {
 }
 
 export default function BottomTabBar({ activeTab, onTabPress }: BottomTabBarProps) {
+  const { colors } = useTheme();
+  
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
       {TABS.map((tab) => {
         const isActive = activeTab === tab.name;
         return (
@@ -35,9 +38,9 @@ export default function BottomTabBar({ activeTab, onTabPress }: BottomTabBarProp
             accessibilityRole="button"
             accessibilityLabel={tab.label}
           >
-            <Text style={[styles.icon, isActive && styles.iconActive]}>{tab.icon}</Text>
-            <Text style={[styles.label, isActive && styles.labelActive]}>{tab.label}</Text>
-            {isActive && <View style={styles.activeDot} />}
+            <Text style={[styles.icon, { color: colors.textMuted }, isActive && { color: colors.primary }]}>{tab.icon}</Text>
+            <Text style={[styles.label, { color: colors.textMuted }, isActive && { color: colors.primary, fontWeight: '700' }]}>{tab.label}</Text>
+            {isActive && <View style={[styles.activeDot, { backgroundColor: colors.primary }]} />}
           </Pressable>
         );
       })}
@@ -48,9 +51,7 @@ export default function BottomTabBar({ activeTab, onTabPress }: BottomTabBarProp
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
     paddingBottom: 8,
     paddingTop: 6,
     shadowColor: '#000',
@@ -67,25 +68,15 @@ const styles = StyleSheet.create({
   },
   icon: {
     fontSize: 20,
-    color: '#9CA3AF',
-  },
-  iconActive: {
-    color: '#C9A227',
   },
   label: {
     fontSize: 10,
-    color: '#9CA3AF',
     fontWeight: '500',
-  },
-  labelActive: {
-    color: '#C9A227',
-    fontWeight: '700',
   },
   activeDot: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#C9A227',
     marginTop: 1,
   },
 });

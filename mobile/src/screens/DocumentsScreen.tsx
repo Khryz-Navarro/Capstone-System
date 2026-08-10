@@ -11,6 +11,7 @@ import {
 import DocumentCard from '../components/DocumentCard';
 import { createRequest, getDocumentTypes } from '../services/api';
 import { TabName } from '../components/BottomTabBar';
+import { useTheme } from '../theme/ThemeContext';
 
 interface DocumentsScreenProps {
   onNavigate: (tab: TabName) => void;
@@ -39,6 +40,7 @@ export default function DocumentsScreen({ onNavigate }: DocumentsScreenProps) {
   const [documentTypes, setDocumentTypes] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const { colors } = useTheme();
 
   useEffect(() => {
     getDocumentTypes()
@@ -74,14 +76,14 @@ export default function DocumentsScreen({ onNavigate }: DocumentsScreenProps) {
   );
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.headerBg }]}>
         <View style={styles.headerLogoRow}>
-          <View style={styles.logoIcon}>
-            <Text style={styles.logoText}>⌂</Text>
+          <View style={[styles.logoIcon, { backgroundColor: colors.primary }]}>
+            <Text style={[styles.logoText, { color: colors.headerText }]}>⌂</Text>
           </View>
-          <Text style={styles.logoTitle}>Barangay Connect</Text>
+          <Text style={[styles.logoTitle, { color: colors.headerText }]}>Barangay Connect</Text>
         </View>
         <Text style={styles.headerSearch}>🔍</Text>
       </View>
@@ -94,24 +96,24 @@ export default function DocumentsScreen({ onNavigate }: DocumentsScreenProps) {
       >
         {/* Page Title */}
         <View style={styles.pageTitle}>
-          <Text style={styles.titleMain}>Document Services</Text>
-          <Text style={styles.titleSub}>Select the document you need to request from your local barangay office.</Text>
+          <Text style={[styles.titleMain, { color: colors.text }]}>Document Services</Text>
+          <Text style={[styles.titleSub, { color: colors.textSecondary }]}>Select the document you need to request from your local barangay office.</Text>
         </View>
 
         {/* Search Bar */}
-        <View style={styles.searchBar}>
+        <View style={[styles.searchBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
             placeholder="Search for clearances, residency, etc..."
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textMuted}
             value={search}
             onChangeText={setSearch}
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.text }]}
           />
         </View>
 
         {loading ? (
-          <ActivityIndicator size="large" color="#C9A227" style={{ marginTop: 40 }} />
+          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
         ) : (
           <>
             {/* Featured notice */}
@@ -140,20 +142,20 @@ export default function DocumentsScreen({ onNavigate }: DocumentsScreenProps) {
             {filtered.length === 0 && !loading && (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyIcon}>📄</Text>
-                <Text style={styles.emptyText}>No documents found</Text>
-                <Text style={styles.emptySubtext}>Try a different search term</Text>
+                <Text style={[styles.emptyText, { color: colors.text }]}>No documents found</Text>
+                <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>Try a different search term</Text>
               </View>
             )}
 
             {/* Footer */}
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Can't find what you need?</Text>
-              <Text style={styles.footerSub}>
+            <View style={[styles.footer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.footerText, { color: colors.text }]}>Can't find what you need?</Text>
+              <Text style={[styles.footerSub, { color: colors.textSecondary }]}>
                 You can visit the Barangay hall for special requests or visit our Help center.
               </Text>
-              <View style={styles.contactRow}>
+              <View style={[styles.contactRow, { backgroundColor: colors.background }]}>
                 <Text style={styles.contactIcon}>📞</Text>
-                <Text style={styles.contactText}>Contact Support</Text>
+                <Text style={[styles.contactText, { color: colors.text }]}>Contact Support</Text>
               </View>
             </View>
           </>
@@ -164,9 +166,8 @@ export default function DocumentsScreen({ onNavigate }: DocumentsScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F5F6FA' },
+  root: { flex: 1 },
   header: {
-    backgroundColor: '#1a1a2e',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -179,57 +180,51 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 6,
-    backgroundColor: '#C9A227',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logoText: { color: '#fff', fontSize: 14 },
-  logoTitle: { color: '#FFFFFF', fontWeight: '700', fontSize: 15 },
+  logoText: { fontSize: 14 },
+  logoTitle: { fontWeight: '700', fontSize: 15 },
   headerSearch: { fontSize: 20 },
   scroll: { flex: 1 },
   content: { padding: 20, gap: 12, paddingBottom: 32 },
   pageTitle: { gap: 4 },
-  titleMain: { fontSize: 20, fontWeight: '800', color: '#0D1B2A' },
-  titleSub: { fontSize: 13, color: '#6B7280', lineHeight: 18 },
+  titleMain: { fontSize: 20, fontWeight: '800' },
+  titleSub: { fontSize: 13, lineHeight: 18 },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
     paddingHorizontal: 12,
     paddingVertical: 10,
     gap: 8,
   },
   searchIcon: { fontSize: 16 },
-  searchInput: { flex: 1, fontSize: 14, color: '#0D1B2A' },
+  searchInput: { flex: 1, fontSize: 14 },
   emptyState: { alignItems: 'center', paddingVertical: 40, gap: 8 },
   emptyIcon: { fontSize: 40 },
-  emptyText: { fontSize: 16, fontWeight: '700', color: '#374151' },
-  emptySubtext: { fontSize: 13, color: '#9CA3AF' },
+  emptyText: { fontSize: 16, fontWeight: '700' },
+  emptySubtext: { fontSize: 13 },
   footer: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 16,
     alignItems: 'center',
     gap: 6,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
     marginTop: 4,
   },
-  footerText: { fontSize: 14, fontWeight: '700', color: '#0D1B2A' },
-  footerSub: { fontSize: 12, color: '#6B7280', textAlign: 'center', lineHeight: 18 },
+  footerText: { fontSize: 14, fontWeight: '700' },
+  footerSub: { fontSize: 12, textAlign: 'center', lineHeight: 18 },
   contactRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     marginTop: 4,
-    backgroundColor: '#F5F6FA',
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 999,
   },
   contactIcon: { fontSize: 14 },
-  contactText: { fontSize: 13, fontWeight: '600', color: '#374151' },
+  contactText: { fontSize: 13, fontWeight: '600' },
 });

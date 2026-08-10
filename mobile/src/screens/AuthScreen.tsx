@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import { loginUser, registerUser } from '../services/api';
+import { useTheme } from '../theme/ThemeContext';
 
 const GENDER_OPTIONS = [
   { label: 'Male', value: 'male' },
@@ -40,17 +41,18 @@ function OptionPicker({
   options: { label: string; value: string }[];
   onChange: (v: string) => void;
 }) {
+  const { colors } = useTheme();
   return (
     <View style={styles.inputGroup}>
-      <Text style={styles.inputLabel}>{label}</Text>
+      <Text style={[styles.inputLabel, { color: colors.text }]}>{label}</Text>
       <View style={styles.optionRow}>
         {options.map((opt) => (
           <Pressable
             key={opt.value}
-            style={[styles.optionBtn, value === opt.value && styles.optionBtnActive]}
+            style={[styles.optionBtn, { borderColor: colors.border, backgroundColor: colors.inputBg }, value === opt.value && { backgroundColor: colors.primary, borderColor: colors.primary }]}
             onPress={() => onChange(opt.value)}
           >
-            <Text style={[styles.optionText, value === opt.value && styles.optionTextActive]}>
+            <Text style={[styles.optionText, { color: colors.text }, value === opt.value && styles.optionTextActive]}>
               {opt.label}
             </Text>
           </Pressable>
@@ -62,6 +64,7 @@ function OptionPicker({
 
 export default function AuthScreen({ onAuthenticated }: { onAuthenticated: () => void }) {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const { colors } = useTheme();
 
   // Login fields
   const [login, setLogin] = useState('');
@@ -176,7 +179,6 @@ export default function AuthScreen({ onAuthenticated }: { onAuthenticated: () =>
       await AsyncStorage.setItem('mobile_token', data.token);
       onAuthenticated();
     } catch (error: any) {
-      // Surface the actual server validation error message
       const errors = error?.response?.data?.errors as Record<string, string[]> | undefined;
       const firstError = errors ? Object.values(errors)[0]?.[0] : undefined;
       const msg =
@@ -191,39 +193,39 @@ export default function AuthScreen({ onAuthenticated }: { onAuthenticated: () =>
   }
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={[styles.container, { backgroundColor: colors.background }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         {/* Brand Header */}
         <View style={styles.brandHeader}>
-          <View style={styles.brandIcon}>
-            <Text style={styles.brandIconText}>⌂</Text>
+          <View style={[styles.brandIcon, { backgroundColor: colors.primary }]}>
+            <Text style={[styles.brandIconText, { color: colors.headerBg }]}>⌂</Text>
           </View>
-          <Text style={styles.brandTitle}>Barangay Connect</Text>
-          <Text style={styles.brandSub}>Your digital barangay portal</Text>
+          <Text style={[styles.brandTitle, { color: colors.text }]}>Barangay Connect</Text>
+          <Text style={[styles.brandSub, { color: colors.textMuted }]}>Your digital barangay portal</Text>
         </View>
 
         {/* Card */}
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.card, shadowColor: colors.text }]}>
           {/* Tab switcher */}
-          <View style={styles.tabRow}>
+          <View style={[styles.tabRow, { backgroundColor: colors.borderLight }]}>
             <Pressable
-              style={[styles.tabBtn, mode === 'login' && styles.tabBtnActive]}
+              style={[styles.tabBtn, mode === 'login' && { backgroundColor: colors.card }]}
               onPress={() => setMode('login')}
             >
-              <Text style={[styles.tabText, mode === 'login' && styles.tabTextActive]}>Sign In</Text>
+              <Text style={[styles.tabText, { color: colors.textMuted }, mode === 'login' && { color: colors.text }]}>Sign In</Text>
             </Pressable>
             <Pressable
-              style={[styles.tabBtn, mode === 'signup' && styles.tabBtnActive]}
+              style={[styles.tabBtn, mode === 'signup' && { backgroundColor: colors.card }]}
               onPress={() => setMode('signup')}
             >
-              <Text style={[styles.tabText, mode === 'signup' && styles.tabTextActive]}>Sign Up</Text>
+              <Text style={[styles.tabText, { color: colors.textMuted }, mode === 'signup' && { color: colors.text }]}>Sign Up</Text>
             </Pressable>
           </View>
 
-          <Text style={styles.formTitle}>
+          <Text style={[styles.formTitle, { color: colors.text }]}>
             {mode === 'login' ? 'Welcome back!' : 'Create your account'}
           </Text>
-          <Text style={styles.formSubtitle}>
+          <Text style={[styles.formSubtitle, { color: colors.textSecondary }]}>
             {mode === 'login'
               ? 'Sign in to access your barangay services.'
               : 'Fill in your details to register as a resident.'}
@@ -232,26 +234,26 @@ export default function AuthScreen({ onAuthenticated }: { onAuthenticated: () =>
           {mode === 'login' ? (
             <>
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Email or Username</Text>
+                <Text style={[styles.inputLabel, { color: colors.text }]}>Email or Username</Text>
                 <TextInput
                   autoCapitalize="none"
                   autoCorrect={false}
                   placeholder="juan@example.com"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.textMuted}
                   value={login}
                   onChangeText={setLogin}
-                  style={styles.input}
+                  style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
                 />
               </View>
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Password</Text>
+                <Text style={[styles.inputLabel, { color: colors.text }]}>Password</Text>
                 <TextInput
                   placeholder="••••••••"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.textMuted}
                   secureTextEntry
                   value={password}
                   onChangeText={setPassword}
-                  style={styles.input}
+                  style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
                 />
               </View>
             </>
@@ -259,33 +261,33 @@ export default function AuthScreen({ onAuthenticated }: { onAuthenticated: () =>
             <>
               <View style={styles.nameRow}>
                 <View style={[styles.inputGroup, styles.halfInput]}>
-                  <Text style={styles.inputLabel}>First Name</Text>
-                  <TextInput placeholder="Juan" placeholderTextColor="#9CA3AF" value={firstName} onChangeText={setFirstName} style={styles.input} />
+                  <Text style={[styles.inputLabel, { color: colors.text }]}>First Name</Text>
+                  <TextInput placeholder="Juan" placeholderTextColor={colors.textMuted} value={firstName} onChangeText={setFirstName} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]} />
                 </View>
                 <View style={[styles.inputGroup, styles.halfInput]}>
-                  <Text style={styles.inputLabel}>Last Name</Text>
-                  <TextInput placeholder="Dela Cruz" placeholderTextColor="#9CA3AF" value={lastName} onChangeText={setLastName} style={styles.input} />
+                  <Text style={[styles.inputLabel, { color: colors.text }]}>Last Name</Text>
+                  <TextInput placeholder="Dela Cruz" placeholderTextColor={colors.textMuted} value={lastName} onChangeText={setLastName} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]} />
                 </View>
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Email</Text>
-                <TextInput autoCapitalize="none" keyboardType="email-address" placeholder="juan@example.com" placeholderTextColor="#9CA3AF" value={email} onChangeText={setEmail} style={styles.input} />
+                <Text style={[styles.inputLabel, { color: colors.text }]}>Email</Text>
+                <TextInput autoCapitalize="none" keyboardType="email-address" placeholder="juan@example.com" placeholderTextColor={colors.textMuted} value={email} onChangeText={setEmail} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]} />
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Mobile Number</Text>
-                <TextInput keyboardType="phone-pad" placeholder="09XX XXX XXXX" placeholderTextColor="#9CA3AF" value={mobileNumber} onChangeText={setMobileNumber} style={styles.input} />
+                <Text style={[styles.inputLabel, { color: colors.text }]}>Mobile Number</Text>
+                <TextInput keyboardType="phone-pad" placeholder="09XX XXX XXXX" placeholderTextColor={colors.textMuted} value={mobileNumber} onChangeText={setMobileNumber} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]} />
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Date of Birth (YYYY-MM-DD)</Text>
+                <Text style={[styles.inputLabel, { color: colors.text }]}>Date of Birth (YYYY-MM-DD)</Text>
                 <TextInput
                   placeholder="1995-06-15"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.textMuted}
                   value={birthdate}
                   onChangeText={setBirthdate}
-                  style={styles.input}
+                  style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
                   keyboardType="numbers-and-punctuation"
                 />
               </View>
@@ -295,36 +297,36 @@ export default function AuthScreen({ onAuthenticated }: { onAuthenticated: () =>
               <OptionPicker label="Civil Status" value={civilStatus} options={CIVIL_STATUS_OPTIONS} onChange={setCivilStatus} />
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Barangay ID</Text>
-                <TextInput placeholder="1" placeholderTextColor="#9CA3AF" value={barangayId} onChangeText={setBarangayId} style={styles.input} keyboardType="numeric" />
+                <Text style={[styles.inputLabel, { color: colors.text }]}>Barangay ID</Text>
+                <TextInput placeholder="1" placeholderTextColor={colors.textMuted} value={barangayId} onChangeText={setBarangayId} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]} keyboardType="numeric" />
               </View>
 
               <View style={styles.nameRow}>
                 <View style={[styles.inputGroup, styles.halfInput]}>
-                  <Text style={styles.inputLabel}>City</Text>
-                  <TextInput placeholder="City" placeholderTextColor="#9CA3AF" value={city} onChangeText={setCity} style={styles.input} />
+                  <Text style={[styles.inputLabel, { color: colors.text }]}>City</Text>
+                  <TextInput placeholder="City" placeholderTextColor={colors.textMuted} value={city} onChangeText={setCity} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]} />
                 </View>
                 <View style={[styles.inputGroup, styles.halfInput]}>
-                  <Text style={styles.inputLabel}>Province</Text>
-                  <TextInput placeholder="Province" placeholderTextColor="#9CA3AF" value={province} onChangeText={setProvince} style={styles.input} />
+                  <Text style={[styles.inputLabel, { color: colors.text }]}>Province</Text>
+                  <TextInput placeholder="Province" placeholderTextColor={colors.textMuted} value={province} onChangeText={setProvince} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]} />
                 </View>
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Password</Text>
-                <TextInput placeholder="••••••••" placeholderTextColor="#9CA3AF" secureTextEntry value={signupPassword} onChangeText={setSignupPassword} style={styles.input} />
+                <Text style={[styles.inputLabel, { color: colors.text }]}>Password</Text>
+                <TextInput placeholder="••••••••" placeholderTextColor={colors.textMuted} secureTextEntry value={signupPassword} onChangeText={setSignupPassword} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]} />
               </View>
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Confirm Password</Text>
-                <TextInput placeholder="••••••••" placeholderTextColor="#9CA3AF" secureTextEntry value={confirmPassword} onChangeText={setConfirmPassword} style={styles.input} />
+                <Text style={[styles.inputLabel, { color: colors.text }]}>Confirm Password</Text>
+                <TextInput placeholder="••••••••" placeholderTextColor={colors.textMuted} secureTextEntry value={confirmPassword} onChangeText={setConfirmPassword} style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]} />
               </View>
 
               {/* ID Photo upload */}
-              <View style={styles.uploadSection}>
-                <Text style={styles.uploadTitle}>📷  Valid ID Photo</Text>
-                <Text style={styles.uploadHint}>Upload a clear photo of any government-issued ID. Required for account verification.</Text>
-                <Pressable style={styles.uploadBtn} onPress={handlePickIdPhoto}>
-                  <Text style={styles.uploadBtnText}>{idPhoto ? '✓ Change ID photo' : '↑ Upload ID photo'}</Text>
+              <View style={[styles.uploadSection, { borderColor: colors.warningBg, backgroundColor: colors.warningBg }]}>
+                <Text style={[styles.uploadTitle, { color: colors.warningText }]}>📷  Valid ID Photo</Text>
+                <Text style={[styles.uploadHint, { color: colors.textSecondary }]}>Upload a clear photo of any government-issued ID. Required for account verification.</Text>
+                <Pressable style={[styles.uploadBtn, { backgroundColor: colors.primary }]} onPress={handlePickIdPhoto}>
+                  <Text style={[styles.uploadBtnText, { color: colors.headerText }]}>{idPhoto ? '✓ Change ID photo' : '↑ Upload ID photo'}</Text>
                 </Pressable>
                 {idPhoto && <Image source={{ uri: idPhoto.uri }} style={styles.idPreview} />}
               </View>
@@ -332,13 +334,13 @@ export default function AuthScreen({ onAuthenticated }: { onAuthenticated: () =>
           )}
 
           <Pressable
-            style={[styles.submitBtn, loading && styles.submitBtnDisabled]}
+            style={[styles.submitBtn, { backgroundColor: colors.primary }, loading && styles.submitBtnDisabled]}
             onPress={mode === 'login' ? handleLogin : handleSignup}
             disabled={loading}
           >
             {loading
-              ? <ActivityIndicator color="#1a1a2e" />
-              : <Text style={styles.submitBtnText}>{mode === 'login' ? 'Sign In' : 'Create Account'}</Text>}
+              ? <ActivityIndicator color={colors.headerText} />
+              : <Text style={[styles.submitBtnText, { color: colors.headerText }]}>{mode === 'login' ? 'Sign In' : 'Create Account'}</Text>}
           </Pressable>
         </View>
       </ScrollView>
@@ -347,63 +349,59 @@ export default function AuthScreen({ onAuthenticated }: { onAuthenticated: () =>
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#1a1a2e' },
+  container: { flex: 1 },
   scrollContent: { flexGrow: 1, justifyContent: 'center', padding: 24, gap: 24 },
   brandHeader: { alignItems: 'center', gap: 8 },
   brandIcon: {
     width: 56, height: 56, borderRadius: 16,
-    backgroundColor: '#C9A227', alignItems: 'center', justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
   },
-  brandIconText: { fontSize: 28, color: '#fff' },
-  brandTitle: { fontSize: 22, fontWeight: '800', color: '#FFFFFF' },
-  brandSub: { fontSize: 13, color: '#9CA3AF' },
+  brandIconText: { fontSize: 28 },
+  brandTitle: { fontSize: 22, fontWeight: '800' },
+  brandSub: { fontSize: 13 },
   card: {
-    backgroundColor: '#FFFFFF', borderRadius: 20, padding: 24, gap: 14,
-    shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 20, elevation: 8,
+    borderRadius: 20, padding: 24, gap: 14,
+    shadowOpacity: 0.15, shadowRadius: 20, elevation: 8,
   },
   tabRow: {
-    flexDirection: 'row', backgroundColor: '#F3F4F6',
+    flexDirection: 'row',
     borderRadius: 12, padding: 4,
   },
   tabBtn: { flex: 1, paddingVertical: 8, borderRadius: 10, alignItems: 'center' },
-  tabBtnActive: { backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 },
-  tabText: { fontSize: 14, fontWeight: '600', color: '#9CA3AF' },
-  tabTextActive: { color: '#0D1B2A' },
-  formTitle: { fontSize: 18, fontWeight: '800', color: '#0D1B2A', marginTop: 4 },
-  formSubtitle: { fontSize: 13, color: '#6B7280', marginTop: -8 },
+  tabText: { fontSize: 14, fontWeight: '600' },
+  formTitle: { fontSize: 18, fontWeight: '800', marginTop: 4 },
+  formSubtitle: { fontSize: 13, marginTop: -8 },
   nameRow: { flexDirection: 'row', gap: 10 },
   halfInput: { flex: 1 },
   inputGroup: { gap: 5 },
-  inputLabel: { fontSize: 12, fontWeight: '600', color: '#374151' },
+  inputLabel: { fontSize: 12, fontWeight: '600' },
   input: {
-    borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10,
+    borderWidth: 1, borderRadius: 10,
     paddingHorizontal: 12, paddingVertical: 11, fontSize: 14,
-    color: '#0D1B2A', backgroundColor: '#F9FAFB',
   },
   optionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   optionBtn: {
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8,
-    borderWidth: 1, borderColor: '#E5E7EB', backgroundColor: '#F9FAFB',
+    borderWidth: 1,
   },
-  optionBtnActive: { backgroundColor: '#C9A227', borderColor: '#C9A227' },
-  optionText: { fontSize: 13, fontWeight: '600', color: '#374151' },
+  optionText: { fontSize: 13, fontWeight: '600' },
   optionTextActive: { color: '#FFFFFF' },
   uploadSection: {
-    borderWidth: 1, borderColor: '#FDE68A', borderRadius: 12,
-    padding: 14, backgroundColor: '#FFFBEB', gap: 8,
+    borderWidth: 1, borderRadius: 12,
+    padding: 14, gap: 8,
   },
-  uploadTitle: { fontSize: 13, fontWeight: '700', color: '#92400E' },
-  uploadHint: { fontSize: 12, color: '#6B7280', lineHeight: 17 },
+  uploadTitle: { fontSize: 13, fontWeight: '700' },
+  uploadHint: { fontSize: 12, lineHeight: 17 },
   uploadBtn: {
-    backgroundColor: '#C9A227', borderRadius: 8,
+    borderRadius: 8,
     paddingVertical: 10, alignItems: 'center',
   },
-  uploadBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
+  uploadBtnText: { fontWeight: '700', fontSize: 13 },
   idPreview: { width: '100%', height: 160, borderRadius: 10, resizeMode: 'cover' },
   submitBtn: {
-    backgroundColor: '#C9A227', borderRadius: 12,
+    borderRadius: 12,
     paddingVertical: 14, alignItems: 'center', marginTop: 4,
   },
   submitBtnDisabled: { opacity: 0.7 },
-  submitBtnText: { color: '#1a1a2e', fontWeight: '800', fontSize: 15 },
+  submitBtnText: { fontWeight: '800', fontSize: 15 },
 });

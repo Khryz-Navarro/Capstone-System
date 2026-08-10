@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import StatusBadge from '../components/StatusBadge';
 import { listRequests } from '../services/api';
+import { useTheme } from '../theme/ThemeContext';
 
 const STEPS = ['Received', 'Processed', 'Notification', 'Ready for Pickup'];
 
@@ -27,6 +28,7 @@ export default function TrackingScreen() {
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const { colors } = useTheme();
 
   useEffect(() => {
     loadRequests();
@@ -59,8 +61,8 @@ export default function TrackingScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#C9A227" />
+      <View style={[styles.loader, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -70,14 +72,14 @@ export default function TrackingScreen() {
   const currentStep = currentRequest ? getStepIndex(currentRequest.status) : -1;
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.headerBg }]}>
         <View style={styles.headerLogoRow}>
-          <View style={styles.logoIcon}>
-            <Text style={styles.logoText}>⌂</Text>
+          <View style={[styles.logoIcon, { backgroundColor: colors.primary }]}>
+            <Text style={[styles.logoText, { color: colors.headerText }]}>⌂</Text>
           </View>
-          <Text style={styles.logoTitle}>Barangay Connect</Text>
+          <Text style={[styles.logoTitle, { color: colors.headerText }]}>Barangay Connect</Text>
         </View>
       </View>
 
@@ -85,21 +87,21 @@ export default function TrackingScreen() {
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#C9A227" />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
       >
         {/* Current Request */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Current Request</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Current Request</Text>
 
           {currentRequest ? (
-            <View style={styles.currentCard}>
+            <View style={[styles.currentCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               {/* Reference */}
               <View style={styles.refRow}>
-                <Text style={styles.docName}>{currentRequest.document_type?.name ?? 'Document Request'}</Text>
+                <Text style={[styles.docName, { color: colors.text }]}>{currentRequest.document_type?.name ?? 'Document Request'}</Text>
                 <StatusBadge status={currentRequest.status} label={currentRequest.status_label} />
               </View>
               {currentRequest.reference_number && (
-                <Text style={styles.refNum}>Ref# {currentRequest.reference_number}</Text>
+                <Text style={[styles.refNum, { color: colors.textMuted }]}>Ref# {currentRequest.reference_number}</Text>
               )}
 
               {/* Step Tracker */}
@@ -111,20 +113,30 @@ export default function TrackingScreen() {
                     <View key={step} style={styles.trackerStep}>
                       <View style={styles.trackerLine}>
                         {index > 0 && (
-                          <View style={[styles.line, done && styles.lineDone]} />
+                          <View style={[styles.line, { backgroundColor: colors.borderLight }, done && { backgroundColor: colors.success }]} />
                         )}
-                        <View style={[styles.dot, done && styles.dotDone, active && styles.dotActive]}>
+                        <View style={[
+                          styles.dot,
+                          { backgroundColor: colors.inputBg, borderColor: colors.borderLight },
+                          done && { backgroundColor: colors.success, borderColor: colors.success },
+                          active && { backgroundColor: colors.primary, borderColor: colors.primary }
+                        ]}>
                           {done && <Text style={styles.dotCheck}>{active ? '●' : '✓'}</Text>}
                         </View>
                         {index < STEPS.length - 1 && (
-                          <View style={[styles.line, done && index < currentStep && styles.lineDone]} />
+                          <View style={[styles.line, { backgroundColor: colors.borderLight }, done && index < currentStep && { backgroundColor: colors.success }]} />
                         )}
                       </View>
-                      <Text style={[styles.stepLabel, active && styles.stepLabelActive, done && styles.stepLabelDone]}>
+                      <Text style={[
+                        styles.stepLabel,
+                        { color: colors.textMuted },
+                        active && { color: colors.primary, fontWeight: '700' },
+                        done && { color: colors.success, fontWeight: '600' }
+                      ]}>
                         {step}
                       </Text>
                       {index === currentStep && currentRequest.updated_at && (
-                        <Text style={styles.stepDate}>{formatDate(currentRequest.updated_at)}</Text>
+                        <Text style={[styles.stepDate, { color: colors.textMuted }]}>{formatDate(currentRequest.updated_at)}</Text>
                       )}
                     </View>
                   );
@@ -133,19 +145,19 @@ export default function TrackingScreen() {
 
               {/* Actions */}
               <View style={styles.actionRow}>
-                <Pressable style={styles.viewBtn}>
-                  <Text style={styles.viewBtnText}>View Receipt</Text>
+                <Pressable style={[styles.viewBtn, { backgroundColor: colors.primary }]}>
+                  <Text style={[styles.viewBtnText, { color: colors.headerText }]}>View Receipt</Text>
                 </Pressable>
-                <Pressable style={styles.cancelBtn} onPress={handleCancel}>
-                  <Text style={styles.cancelBtnText}>Cancel Request</Text>
+                <Pressable style={[styles.cancelBtn, { backgroundColor: colors.dangerBg, borderColor: colors.dangerBorder }]} onPress={handleCancel}>
+                  <Text style={[styles.cancelBtnText, { color: colors.dangerText }]}>Cancel Request</Text>
                 </Pressable>
               </View>
             </View>
           ) : (
-            <View style={styles.emptyCard}>
+            <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={styles.emptyIcon}>📋</Text>
-              <Text style={styles.emptyText}>No active requests</Text>
-              <Text style={styles.emptySubtext}>Submit a document request to track it here</Text>
+              <Text style={[styles.emptyText, { color: colors.text }]}>No active requests</Text>
+              <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>Submit a document request to track it here</Text>
             </View>
           )}
         </View>
@@ -154,21 +166,21 @@ export default function TrackingScreen() {
         {history.length > 0 && (
           <View style={styles.section}>
             <View style={styles.historyHeader}>
-              <Text style={styles.sectionTitle}>History</Text>
-              <Pressable style={styles.filterBtn}>
-                <Text style={styles.filterText}>Filter ⊿</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>History</Text>
+              <Pressable style={[styles.filterBtn, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Text style={[styles.filterText, { color: colors.text }]}>Filter ⊿</Text>
               </Pressable>
             </View>
 
             <View style={styles.historyList}>
               {history.map((item) => (
-                <View key={item.id} style={styles.historyItem}>
-                  <View style={styles.historyIcon}>
-                    <Text style={styles.historyIconText}>☰</Text>
+                <View key={item.id} style={[styles.historyItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <View style={[styles.historyIcon, { backgroundColor: colors.inputBg }]}>
+                    <Text style={[styles.historyIconText, { color: colors.textSecondary }]}>☰</Text>
                   </View>
                   <View style={styles.historyContent}>
-                    <Text style={styles.historyName}>{item.document_type?.name ?? 'Request'}</Text>
-                    <Text style={styles.historyDate}>{formatDate(item.created_at)}</Text>
+                    <Text style={[styles.historyName, { color: colors.text }]}>{item.document_type?.name ?? 'Request'}</Text>
+                    <Text style={[styles.historyDate, { color: colors.textMuted }]}>{formatDate(item.created_at)}</Text>
                   </View>
                   <StatusBadge status={item.status} label={item.status_label} />
                 </View>
@@ -180,8 +192,8 @@ export default function TrackingScreen() {
         {requests.length === 0 && (
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateIcon}>📂</Text>
-            <Text style={styles.emptyStateText}>No requests yet</Text>
-            <Text style={styles.emptyStateSubtext}>Your document requests will appear here</Text>
+            <Text style={[styles.emptyStateText, { color: colors.text }]}>No requests yet</Text>
+            <Text style={[styles.emptyStateSubtext, { color: colors.textSecondary }]}>Your document requests will appear here</Text>
           </View>
         )}
       </ScrollView>
@@ -195,10 +207,9 @@ function formatDate(iso?: string) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F5F6FA' },
-  loader: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F5F6FA' },
+  root: { flex: 1 },
+  loader: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
-    backgroundColor: '#1a1a2e',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -211,31 +222,28 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 6,
-    backgroundColor: '#C9A227',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logoText: { color: '#fff', fontSize: 14 },
-  logoTitle: { color: '#FFFFFF', fontWeight: '700', fontSize: 15 },
+  logoText: { fontSize: 14 },
+  logoTitle: { fontWeight: '700', fontSize: 15 },
   scroll: { flex: 1 },
   content: { padding: 20, gap: 16, paddingBottom: 32 },
   section: { gap: 10 },
-  sectionTitle: { fontSize: 17, fontWeight: '800', color: '#0D1B2A' },
+  sectionTitle: { fontSize: 17, fontWeight: '800' },
   currentCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
     gap: 14,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
     shadowColor: '#000',
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 3,
   },
   refRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  docName: { fontSize: 15, fontWeight: '700', color: '#0D1B2A', flex: 1, marginRight: 8 },
-  refNum: { fontSize: 11, color: '#9CA3AF', marginTop: -8 },
+  docName: { fontSize: 15, fontWeight: '700', flex: 1, marginRight: 8 },
+  refNum: { fontSize: 11, marginTop: -8 },
   tracker: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -255,28 +263,14 @@ const styles = StyleSheet.create({
   line: {
     flex: 1,
     height: 2,
-    backgroundColor: '#E5E7EB',
-  },
-  lineDone: {
-    backgroundColor: '#22C55E',
   },
   dot: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#D1D5DB',
-  },
-  dotDone: {
-    backgroundColor: '#22C55E',
-    borderColor: '#22C55E',
-  },
-  dotActive: {
-    backgroundColor: '#C9A227',
-    borderColor: '#C9A227',
   },
   dotCheck: {
     color: '#FFFFFF',
@@ -285,89 +279,69 @@ const styles = StyleSheet.create({
   },
   stepLabel: {
     fontSize: 9,
-    color: '#9CA3AF',
     textAlign: 'center',
     fontWeight: '500',
   },
-  stepLabelActive: {
-    color: '#C9A227',
-    fontWeight: '700',
-  },
-  stepLabelDone: {
-    color: '#22C55E',
-    fontWeight: '600',
-  },
   stepDate: {
     fontSize: 8,
-    color: '#9CA3AF',
     textAlign: 'center',
   },
   actionRow: { flexDirection: 'row', gap: 10 },
   viewBtn: {
     flex: 1,
-    backgroundColor: '#C9A227',
     borderRadius: 10,
     paddingVertical: 11,
     alignItems: 'center',
   },
-  viewBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+  viewBtnText: { fontWeight: '700', fontSize: 13 },
   cancelBtn: {
     flex: 1,
-    backgroundColor: '#FEF2F2',
     borderRadius: 10,
     paddingVertical: 11,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#FECACA',
   },
-  cancelBtnText: { color: '#DC2626', fontWeight: '700', fontSize: 13 },
+  cancelBtnText: { fontWeight: '700', fontSize: 13 },
   emptyCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 32,
     alignItems: 'center',
     gap: 8,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
   },
   emptyIcon: { fontSize: 36 },
-  emptyText: { fontSize: 15, fontWeight: '700', color: '#374151' },
-  emptySubtext: { fontSize: 13, color: '#9CA3AF', textAlign: 'center' },
+  emptyText: { fontSize: 15, fontWeight: '700' },
+  emptySubtext: { fontSize: 13, textAlign: 'center' },
   historyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   filterBtn: {
-    backgroundColor: '#FFFFFF',
     paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
   },
-  filterText: { fontSize: 12, color: '#374151', fontWeight: '600' },
+  filterText: { fontSize: 12, fontWeight: '600' },
   historyList: { gap: 8 },
   historyItem: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
   },
   historyIcon: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  historyIconText: { fontSize: 16, color: '#6B7280' },
+  historyIconText: { fontSize: 16 },
   historyContent: { flex: 1 },
-  historyName: { fontWeight: '600', fontSize: 13, color: '#0D1B2A' },
-  historyDate: { fontSize: 11, color: '#9CA3AF', marginTop: 2 },
+  historyName: { fontWeight: '600', fontSize: 13 },
+  historyDate: { fontSize: 11, marginTop: 2 },
   emptyState: { alignItems: 'center', paddingVertical: 60, gap: 8 },
   emptyStateIcon: { fontSize: 48 },
-  emptyStateText: { fontSize: 17, fontWeight: '700', color: '#374151' },
-  emptyStateSubtext: { fontSize: 13, color: '#9CA3AF', textAlign: 'center' },
+  emptyStateText: { fontSize: 17, fontWeight: '700' },
+  emptyStateSubtext: { fontSize: 13, textAlign: 'center' },
 });
