@@ -15,7 +15,11 @@ const api = axios.create({
 api.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem('mobile_token');
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    // Ensure headers object exists (avoid Axios strict header typing issues)
+    if (!config.headers) {
+      (config as any).headers = {};
+    }
+    (config.headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
   return config;
 });
