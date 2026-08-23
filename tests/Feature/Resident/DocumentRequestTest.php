@@ -1,9 +1,12 @@
 <?php
 
 use App\Models\Barangay;
+use App\Models\DocumentRequest;
 use App\Models\DocumentType;
 use App\Models\ResidentProfile;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 function makeResident(Barangay $barangay, string $verification = 'approved'): User
 {
@@ -97,7 +100,7 @@ it('lets a resident download their generated certificate', function () {
         'tenant_id' => $barangay->tenant_id,
     ]);
 
-    $request = \App\Models\DocumentRequest::factory()->create([
+    $request = DocumentRequest::factory()->create([
         'resident_id' => $resident->id,
         'tenant_id' => $barangay->tenant_id,
         'barangay_id' => $barangay->id,
@@ -112,4 +115,43 @@ it('lets a resident download their generated certificate', function () {
         ->get("/api/document-requests/{$request->id}/download")
         ->assertOk()
         ->assertHeader('content-disposition');
+});
+
+it('stores uploaded requirement files for a resident document request', function () {
+    Storage::fake('local');
+
+    $barangay = Barangay::factory()->create();
+    $resident = makeResident($barangay, 'approved');
+    $type = DocumentType::factory()->create([
+        'barangay_id' => $barangay->id,
+        'tenant_id' => $barangay->tenant_id,
+    ]);
+
+    $response = $this->actingAs($resident)->post('/api/document-requests', [
+        'document_type_id' => $type->id,
+        'purpose' => 'Employment',
+        'id_photo' => UploadedFile::fake()->image('id-photo.jpg'),
+        'requirements' => [
+            UploadedFile::fake()->image('utility-bill.jpg'),
+            UploadedFile::fake()->create('referral.pdf', 120, 'application/pdf'),
+        ],
+        'notification_channels' => ['email', 'sms'],
+    ], ['Accept' => 'application/json']);
+
+    $response->assertCreated();
+
+    $requestId = $response->json('data.id');
+
+    $this->assertDatabaseHas('request_requirements', [
+        'document_request_id' => $requestId,
+        'type' => 'id_photo',
+    ]);
+
+    $this->assertDatabaseHas('request_requirements', [
+        'document_request_id' => $requestId,
+        'type' => 'supporting_document',
+        'original_name' => 'utility-bill.jpg',
+    ]);
+
+    $this->assertDatabaseCount('request_requirements', 3);
 });

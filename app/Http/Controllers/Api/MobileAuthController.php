@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class MobileAuthController extends Controller
 {
@@ -29,9 +29,9 @@ class MobileAuthController extends Controller
         ]);
     }
 
-    public function logout(): JsonResponse
+    public function logout(Request $request): JsonResponse
     {
-        Auth::guard('web')->logout();
+        $request->user()?->currentAccessToken()?->delete();
 
         return response()->json(['message' => 'Logged out.']);
     }

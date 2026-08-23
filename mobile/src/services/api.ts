@@ -1,12 +1,23 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';   // ← add this import
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const getApiBaseUrl = () => {              // ← add this function
+  if (__DEV__) {
+    const debuggerHost = Constants.expoConfig?.hostUri?.split(':')[0];
+    if (debuggerHost) {
+      return `http://${debuggerHost}:8000/api`;
+    }
+  }
+  return 'https://your-production-domain.com/api'; // production fallback
+};
+
+const API_BASE_URL = getApiBaseUrl();      // ← replaces the old hardcoded line
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: { 
+  headers: {
     Accept: 'application/json',
     'X-App-Type': 'mobile',
   },
@@ -15,14 +26,25 @@ const api = axios.create({
 api.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem('mobile_token');
   if (token) {
-    // Ensure headers object exists (avoid Axios strict header typing issues)
     if (!config.headers) {
       (config as any).headers = {};
     }
-    (config.headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+    (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
   }
   return config;
 });
+
+export interface UploadableFile {
+  uri: string;
+  name: string;
+  type: string;
+}
+
+interface CreateRequestOptions {
+  idPhoto?: UploadableFile | null;
+  supportingDocuments?: UploadableFile[];
+  notificationChannels?: Array<'email' | 'sms'>;
+}
 
 export async function loginUser(login: string, password: string, deviceName = Platform.OS) {
   const response = await api.post('/mobile/login', { login, password, device_name: deviceName });
@@ -61,8 +83,36 @@ export async function getRequest(id: number) {
   return response.data.data;
 }
 
-export async function createRequest(documentTypeId: number, purpose: string) {
-  const response = await api.post('/document-requests', { document_type_id: documentTypeId, purpose });
+export async function createRequest(documentTypeId: number, purpose: string, options?: CreateRequestOptions) {
+  const hasIdPhoto = Boolean(options?.idPhoto);
+  const hasSupportingDocs = Boolean(options?.supportingDocuments?.length);
+  const hasNotificationChannels = Boolean(options?.notificationChannels?.length);
+
+  if (!hasIdPhoto && !hasSupportingDocs && !hasNotificationChannels) {
+    const response = await api.post('/document-requests', { document_type_id: documentTypeId, purpose });
+    return response.data.data;
+  }
+
+  const formData = new FormData();
+  formData.append('document_type_id', String(documentTypeId));
+  formData.append('purpose', purpose);
+
+  if (options?.idPhoto) {
+    formData.append('id_photo', options.idPhoto as any);
+  }
+
+  (options?.supportingDocuments ?? []).forEach((file) => {
+    formData.append('requirements[]', file as any);
+  });
+
+  (options?.notificationChannels ?? []).forEach((channel) => {
+    formData.append('notification_channels[]', channel);
+  });
+
+  const response = await api.post('/document-requests', formData, {
+   
+  });
+
   return response.data.data;
 }
 

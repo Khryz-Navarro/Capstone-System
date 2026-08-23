@@ -11,10 +11,10 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { createRequest, getDocumentTypes, getProfile } from '../services/api';
+import { launchImageLibraryAsync, MediaTypeOptions, requestMediaLibraryPermissionsAsync } from 'expo-image-picker';
+import { createRequest, getDocumentTypes, getProfile, type UploadableFile } from '../services/api';
 import { TabName } from '../components/BottomTabBar';
 import { useTheme } from '../theme/ThemeContext';
-
 interface RequestFormScreenProps {
   onNavigate: (tab: TabName) => void;
 }
@@ -42,6 +42,9 @@ export default function RequestFormScreen({ onNavigate }: RequestFormScreenProps
   const [notifyEmail, setNotifyEmail] = useState(true);
   const [notifySms, setNotifySms] = useState(true);
 
+  const [idPhoto, setIdPhoto] = useState<UploadableFile | null>(null);
+  const [supportingDocs, setSupportingDocs] = useState<UploadableFile[]>([]);
+
   useEffect(() => {
     Promise.all([getDocumentTypes(), getProfile()])
       .then(([types, profileData]) => {
@@ -63,6 +66,9 @@ export default function RequestFormScreen({ onNavigate }: RequestFormScreenProps
       if (!selectedTypeId) { Alert.alert('Required', 'Please select a document type.'); return false; }
       if (!purpose.trim()) { Alert.alert('Required', 'Please enter the purpose of your request.'); return false; }
     }
+    if (currentStep === 2) {
+      if (!idPhoto) { Alert.alert('Required', 'Please upload a valid ID photo.'); return false; }
+    }
     return true;
   }
 
@@ -77,21 +83,82 @@ export default function RequestFormScreen({ onNavigate }: RequestFormScreenProps
     if (currentStep > 0) setCurrentStep((s) => s - 1);
   }
 
+function normalizeUploadFile(asset: any, fallbackName: string): UploadableFile {
+  return {
+    uri: asset.uri,
+    name: asset.fileName ?? fallbackName,
+    type: asset.mimeType ?? 'image/jpeg',
+  };
+}
+
+async function ensureMediaPermission(): Promise<boolean> {
+  const permission = await requestMediaLibraryPermissionsAsync();
+  if (!permission.granted) {
+    Alert.alert('Permission needed', 'Please allow photo library access to upload requirements.');
+    return false;
+  }
+  return true;
+}
+
+async function handlePickIdPhoto() {
+  const allowed = await ensureMediaPermission();
+  if (!allowed) return;
+
+  const result = await launchImageLibraryAsync({
+    mediaTypes: MediaTypeOptions.Images,
+    allowsEditing: true,
+    quality: 0.8,
+  });
+
+  if (!result.canceled && result.assets?.[0]) {
+    setIdPhoto(normalizeUploadFile(result.assets[0], 'valid-id.jpg'));
+  }
+}
+
+async function handlePickSupportingDocs() {
+  const allowed = await ensureMediaPermission();
+  if (!allowed) return;
+
+  const result = await launchImageLibraryAsync({
+    mediaTypes: MediaTypeOptions.Images,
+    allowsMultipleSelection: true,
+    quality: 0.8,
+    selectionLimit: 5,
+  });
+
+  if (!result.canceled && result.assets?.length) {
+    setSupportingDocs(
+      result.assets.map((asset, index) => normalizeUploadFile(asset, `supporting-${index + 1}.jpg`)),
+    );
+  }
+}
+
   async function handleSubmit() {
-    if (!selectedTypeId) { Alert.alert('Required', 'Please select a document type.'); return; }
-    setSubmitting(true);
+  if (!selectedTypeId) { Alert.alert('Required', 'Please select a document type.'); return; }
+  if (!idPhoto) { Alert.alert('Required', 'Please upload a valid ID photo.'); return; }
+  setSubmitting(true);
     try {
-      await createRequest(selectedTypeId, purpose || 'For personal use');
-      Alert.alert('Request Submitted!', 'Your request has been received. Processing usually takes 1-3 business days.', [
-        { text: 'Track Request', onPress: () => onNavigate('tracking') },
-      ]);
+      await createRequest(selectedTypeId, purpose || 'For personal use', {
+  idPhoto,
+  supportingDocuments: supportingDocs,
+  notificationChannels: [
+    ...(notifyEmail ? ['email' as const] : []),
+    ...(notifySms ? ['sms' as const] : []),
+  ],
+});
       // Reset form
       setCurrentStep(0);
       setPurpose('');
       setSelectedTypeId(null);
-    } catch {
-      Alert.alert('Error', 'Unable to submit your request. Please try again.');
-    } finally {
+      setIdPhoto(null);
+      setSupportingDocs([]);
+    } catch (error: any) {
+  console.log('Submit error:', JSON.stringify(error?.response?.data, null, 2));
+  Alert.alert(
+    'Error',
+    error?.response?.data?.message || JSON.stringify(error?.response?.data?.errors) || 'Unable to submit your request. Please try again.'
+  );
+} finally {
       setSubmitting(false);
     }
   }
@@ -209,53 +276,77 @@ export default function RequestFormScreen({ onNavigate }: RequestFormScreenProps
             </View>
           )}
 
-          {/* Step 2: Purpose */}
-          {currentStep === 1 && (
-            <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.formSectionTitle, { color: colors.text }]}>Document Type & Purpose</Text>
-              <View style={styles.formGroup}>
-                <Text style={[styles.formLabel, { color: colors.textSecondary }]}>Select Document Type</Text>
-                <View style={styles.docTypeList}>
-                  {documentTypes.map((type) => (
-                    <Pressable
-                      key={type.id}
-                      style={[
-                        styles.docTypeOption,
-                        { borderColor: colors.borderLight, backgroundColor: colors.inputBg },
-                        selectedTypeId === type.id && { borderColor: colors.primary, backgroundColor: colors.warningBg }
-                      ]}
-                      onPress={() => setSelectedTypeId(type.id)}
-                    >
-                      <View style={[styles.radioCircle, { borderColor: colors.border }, selectedTypeId === type.id && { borderColor: colors.primary }]}>
-                        {selectedTypeId === type.id && <View style={[styles.radioDot, { backgroundColor: colors.primary }]} />}
-                      </View>
-                      <View style={styles.docTypeText}>
-                        <Text style={[styles.docTypeName, { color: colors.text }, selectedTypeId === type.id && { color: colors.primary }]}>
-                          {type.name}
-                        </Text>
-                        {type.description && (
-                          <Text style={[styles.docTypeDesc, { color: colors.textMuted }]}>{type.description}</Text>
-                        )}
-                      </View>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-
-              <View style={styles.formGroup}>
-                <Text style={[styles.formLabel, { color: colors.textSecondary }]}>Purpose of Request</Text>
-                <TextInput
-                  style={[styles.input, styles.textArea, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
-                  placeholder="e.g. For employment, for scholarship application..."
-                  placeholderTextColor={colors.textMuted}
-                  value={purpose}
-                  onChangeText={setPurpose}
-                  multiline
-                  numberOfLines={4}
-                />
+                  {/* Step 2: Purpose */}
+        {currentStep === 1 && (
+          <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.formSectionTitle, { color: colors.text }]}>Document Type & Purpose</Text>
+            <View style={styles.formGroup}>
+              <Text style={[styles.formLabel, { color: colors.textSecondary }]}>Select Document Type</Text>
+              <View style={styles.docTypeList}>
+                {documentTypes.map((type) => (
+                  <Pressable
+                    key={type.id}
+                    style={[
+                      styles.docTypeOption,
+                      { borderColor: colors.borderLight, backgroundColor: colors.inputBg },
+                      selectedTypeId === type.id && { borderColor: colors.primary, backgroundColor: colors.warningBg }
+                    ]}
+                    onPress={() => setSelectedTypeId(type.id)}
+                  >
+                    <View style={[styles.radioCircle, { borderColor: colors.border }, selectedTypeId === type.id && { borderColor: colors.primary }]}>
+                      {selectedTypeId === type.id && <View style={[styles.radioDot, { backgroundColor: colors.primary }]} />}
+                    </View>
+                    <View style={styles.docTypeText}>
+                      <Text style={[styles.docTypeName, { color: colors.text }, selectedTypeId === type.id && { color: colors.primary }]}>
+                        {type.name}
+                      </Text>
+                      {type.description && (
+                        <Text style={[styles.docTypeDesc, { color: colors.textMuted }]}>{type.description}</Text>
+                      )}
+                    </View>
+                  </Pressable>
+                ))}
               </View>
             </View>
-          )}
+
+            <View style={styles.formGroup}>
+              <Text style={[styles.formLabel, { color: colors.textSecondary }]}>Purpose of Request</Text>
+              <TextInput
+                style={[styles.input, styles.textArea, { borderColor: colors.border, color: colors.text, backgroundColor: colors.inputBg }]}
+                placeholder="e.g. For employment, for scholarship application..."
+                placeholderTextColor={colors.textMuted}
+                value={purpose}
+                onChangeText={setPurpose}
+                multiline
+                numberOfLines={4}
+              />
+            </View>
+
+            {/* Upload Requirements */}
+            <View style={[styles.uploadSection, { borderColor: colors.warningBg, backgroundColor: colors.warningBg }]}>
+              <Text style={[styles.uploadTitle, { color: colors.warningText }]}>Upload Requirements</Text>
+              <Text style={[styles.uploadHint, { color: colors.textSecondary }]}>
+                Add at least one valid ID photo. You can also attach supporting document photos.
+              </Text>
+              <Pressable style={[styles.uploadBtn, { backgroundColor: colors.primary }]} onPress={handlePickIdPhoto}>
+                <Text style={[styles.uploadBtnText, { color: colors.headerText }]}>
+                  {idPhoto ? '✓ Change Valid ID Photo' : '↑ Upload Valid ID Photo'}
+                </Text>
+              </Pressable>
+              {idPhoto && <Text style={[styles.uploadFileName, { color: colors.text }]}>ID: {idPhoto.name}</Text>}
+              <Pressable style={[styles.uploadBtnSecondary, { borderColor: colors.border }]} onPress={handlePickSupportingDocs}>
+                <Text style={[styles.uploadBtnSecondaryText, { color: colors.text }]}>
+                  {supportingDocs.length > 0 ? `✓ Replace Supporting Docs (${supportingDocs.length})` : '↑ Upload Supporting Documents'}
+                </Text>
+              </Pressable>
+              {supportingDocs.map((file, index) => (
+                <Text key={`${file.name}-${index}`} style={[styles.uploadFileName, { color: colors.textMuted }]}>
+                  • {file.name}
+                </Text>
+              ))}
+            </View>
+          </View>
+        )}
 
           {/* Step 3: Notifications */}
           {currentStep === 2 && (
@@ -444,5 +535,28 @@ const styles = StyleSheet.create({
   },
   nextBtnDisabled: { opacity: 0.7 },
   nextBtnText: { fontWeight: '700', fontSize: 14 },
+
+ uploadSection: {
+  borderWidth: 1,
+  borderRadius: 12,
+  padding: 12,
+  gap: 8,
+},
+uploadTitle: { fontSize: 13, fontWeight: '700' },
+uploadHint: { fontSize: 12, lineHeight: 16 },
+uploadBtn: {
+  borderRadius: 8,
+  paddingVertical: 10,
+  alignItems: 'center',
+},
+uploadBtnText: { fontWeight: '700', fontSize: 13 },
+uploadBtnSecondary: {
+  borderRadius: 8,
+  paddingVertical: 10,
+  alignItems: 'center',
+  borderWidth: 1,
+},
+uploadBtnSecondaryText: { fontWeight: '600', fontSize: 13 },
+uploadFileName: { fontSize: 12 },
 });
 

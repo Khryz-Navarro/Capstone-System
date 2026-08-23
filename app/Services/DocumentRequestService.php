@@ -5,8 +5,10 @@ namespace App\Services;
 use App\Enums\RequestStatus;
 use App\Models\DocumentRequest;
 use App\Models\DocumentType;
+use App\Models\RequestRequirement;
 use App\Models\RequestStatusLog;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -14,10 +16,17 @@ class DocumentRequestService
 {
     /**
      * Create a new document request for a resident and log the initial status.
+     *
+     * @param  array<int, UploadedFile>  $supportingDocuments
      */
-    public function submit(User $resident, DocumentType $type, ?string $purpose): DocumentRequest
-    {
-        return DB::transaction(function () use ($resident, $type, $purpose): DocumentRequest {
+    public function submit(
+        User $resident,
+        DocumentType $type,
+        ?string $purpose,
+        ?UploadedFile $idPhoto = null,
+        array $supportingDocuments = [],
+    ): DocumentRequest {
+        return DB::transaction(function () use ($resident, $type, $purpose, $idPhoto, $supportingDocuments): DocumentRequest {
             $request = DocumentRequest::create([
                 'tenant_id' => $resident->tenant_id,
                 'barangay_id' => $resident->barangay_id,
@@ -30,6 +39,14 @@ class DocumentRequestService
             ]);
 
             $this->logStatus($request, null, RequestStatus::Submitted, $resident, 'Request submitted by resident.');
+
+            if ($idPhoto !== null) {
+                $this->storeRequirement($request, $idPhoto, 'id_photo');
+            }
+
+            foreach ($supportingDocuments as $file) {
+                $this->storeRequirement($request, $file, 'supporting_document');
+            }
 
             return $request;
         });
@@ -84,5 +101,21 @@ class DocumentRequestService
         } while (DocumentRequest::withoutGlobalScopes()->where('reference_number', $reference)->exists());
 
         return $reference;
+    }
+
+    protected function storeRequirement(DocumentRequest $request, UploadedFile $file, string $type): void
+    {
+        $path = $file->store("document-requests/{$request->id}/requirements/{$type}", 'local');
+
+        RequestRequirement::create([
+            'tenant_id' => $request->tenant_id,
+            'barangay_id' => $request->barangay_id,
+            'document_request_id' => $request->id,
+            'type' => $type,
+            'file_path' => $path,
+            'original_name' => $file->getClientOriginalName(),
+            'mime_type' => $file->getClientMimeType() ?? $file->getMimeType() ?? 'application/octet-stream',
+            'size' => $file->getSize() ?? 0,
+        ]);
     }
 }

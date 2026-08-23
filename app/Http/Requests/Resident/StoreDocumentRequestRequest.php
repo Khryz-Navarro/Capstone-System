@@ -40,6 +40,11 @@ class StoreDocumentRequestRequest extends FormRequest
                     ->where('is_active', true),
             ],
             'purpose' => ['nullable', 'string', 'max:500'],
+            'id_photo' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
+            'requirements' => ['nullable', 'array', 'max:5'],
+            'requirements.*' => ['file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
+            'notification_channels' => ['nullable', 'array'],
+            'notification_channels.*' => ['string', Rule::in(['email', 'sms'])],
         ];
     }
 }

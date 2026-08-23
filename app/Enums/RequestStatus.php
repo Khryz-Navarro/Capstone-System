@@ -11,6 +11,7 @@ enum RequestStatus: string
     case Generated = 'certificate_generated';
     case ReadyForPickup = 'ready_for_pickup';
     case Released = 'released';
+    case Cancelled = 'cancelled';
 
     public function label(): string
     {
@@ -22,11 +23,12 @@ enum RequestStatus: string
             self::Generated => 'Certificate Generated',
             self::ReadyForPickup => 'Ready for Pickup',
             self::Released => 'Released',
+            self::Cancelled => 'Cancelled',
         };
     }
 
     public function isTerminal(): bool
     {
-        return in_array($this, [self::Released, self::Rejected], true);
+        return in_array($this, [self::Released, self::Rejected, self::Cancelled], true);
     }
 }

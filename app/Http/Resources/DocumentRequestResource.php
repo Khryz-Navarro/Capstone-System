@@ -33,6 +33,7 @@ class DocumentRequestResource extends JsonResource
             'generated_at' => $this->generated_at?->toIso8601String(),
             'released_at' => $this->released_at?->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),
+            'requirements' => RequestRequirementResource::collection($this->whenLoaded('requirements')),
         ];
     }
 }

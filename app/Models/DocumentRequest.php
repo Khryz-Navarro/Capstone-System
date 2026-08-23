@@ -77,4 +77,12 @@ class DocumentRequest extends Model
     {
         return $this->hasMany(RequestStatusLog::class);
     }
+
+    /**
+     * @return HasMany<RequestRequirement, $this>
+     */
+    public function requirements(): HasMany
+    {
+        return $this->hasMany(RequestRequirement::class);
+    }
 }

@@ -12,11 +12,16 @@ export const lightColors = {
   danger: '#DC2626',
   dangerBg: '#FEF2F2',
   dangerBorder: '#FECACA',
+  // Add dangerText for components that expect a colored danger text
+  dangerText: '#B91C1C',
   success: '#22C55E',
   successBg: '#F0FDF4',
   warning: '#F59E0B',
   warningBg: '#FEF3C7',
   warningText: '#92400E',
+  // Informational / neutral accent colors
+  infoBg: '#EFF6FF',
+  infoText: '#1E3A8A',
   iconBg: '#F0FDF4',
   iconColor: '#374151',
   overlay: 'rgba(0,0,0,0.45)',
@@ -37,11 +42,16 @@ export const darkColors = {
   danger: '#EF4444',
   dangerBg: '#7F1D1D',
   dangerBorder: '#991B1B',
+  // dangerText for dark mode
+  dangerText: '#FCA5A5',
   success: '#22C55E',
   successBg: '#064E3B',
   warning: '#F59E0B',
   warningBg: '#78350F',
   warningText: '#FEF3C7',
+  // Informational / neutral accent colors for dark theme
+  infoBg: '#0B1220',
+  infoText: '#93C5FD',
   iconBg: '#374151',
   iconColor: '#E5E7EB',
   overlay: 'rgba(0,0,0,0.65)',
