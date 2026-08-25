@@ -107,7 +107,7 @@ export function RegisterPage() {
             <div className="w-full max-w-2xl">
                 <div className="mb-6 flex justify-center">
                     <Link to="/">
-                        <span className="text-primary text-xl font-bold">MT-BDRS</span>
+                        <span className="text-primary text-xl font-bold">DocuLink</span>
                     </Link>
                 </div>
                 <div className="bg-card rounded-xl border p-6 shadow-sm sm:p-8">
