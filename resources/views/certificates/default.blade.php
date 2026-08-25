@@ -84,7 +84,7 @@
     </table>
 
     <div class="footer">
-        This is a system-generated document from MT-BDRS. Verify authenticity at {{ $verifyUrl }}
+        This is a system-generated document from {{ config('app.name', 'DocuLink') }}. Verify authenticity at {{ $verifyUrl }}
     </div>
 </div>
 </body>

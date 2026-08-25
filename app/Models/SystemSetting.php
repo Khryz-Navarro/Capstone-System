@@ -17,8 +17,8 @@ class SystemSetting extends Model
      * @var array<string, string>
      */
     public const DEFAULTS = [
-        'app_name' => 'MT-BDRS',
-        'support_email' => 'support@mtbdrs.test',
+        'app_name' => 'DocuLink',
+        'support_email' => 'support@doculink.test',
         'allow_registration' => '1',
         'maintenance_mode' => '0',
         'ai_reports_enabled' => '0',

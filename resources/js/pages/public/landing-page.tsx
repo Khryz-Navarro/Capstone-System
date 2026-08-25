@@ -115,7 +115,7 @@ export function LandingPage() {
             <footer className="border-t">
                 <div className="text-muted-foreground mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-sm sm:flex-row">
                     <BrandLogo showText />
-                    <p>© {new Date().getFullYear()} MT-BDRS. All rights reserved.</p>
+                    <p>© {new Date().getFullYear()} DocuLink. All rights reserved.</p>
                 </div>
             </footer>
         </div>
