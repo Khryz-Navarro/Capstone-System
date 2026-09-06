@@ -9,18 +9,19 @@ import {
   Text,
   View,
 } from 'react-native';
-import StatusBadge from '../components/StatusBadge';
-import { getNotifications, getProfile, listRequests, markAllNotificationsRead } from '../services/api';
+import { getDocumentTypes, getNotifications, getProfile, listRequests, markAllNotificationsRead } from '../services/api';
 import { TabName } from '../components/BottomTabBar';
 import { useTheme } from '../theme/ThemeContext';
 
 interface HomeScreenProps {
   onNavigate: (tab: TabName) => void;
+  onRequestDocument: (documentTypeId: number) => void;
 }
 
-export default function HomeScreen({ onNavigate }: HomeScreenProps) {
+export default function HomeScreen({ onNavigate, onRequestDocument }: HomeScreenProps) {
   const [profile, setProfile] = useState<any>(null);
   const [requests, setRequests] = useState<any[]>([]);
+  const [documentTypes, setDocumentTypes] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -33,13 +34,17 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
 
   async function loadData() {
     try {
-      const [profileData, requestsData, notifData] = await Promise.all([
+      const [profileData, requestsData, docTypesData, notifData] = await Promise.all([
         getProfile(),
         listRequests(),
+        getDocumentTypes().catch(() => []),
         getNotifications().catch(() => []),
       ]);
+
       setProfile(profileData);
       setRequests(Array.isArray(requestsData) ? requestsData : []);
+      setDocumentTypes(Array.isArray(docTypesData) ? docTypesData : []);
+
       const notifs = Array.isArray(notifData) ? notifData : [];
       setNotifications(notifs);
       setUnreadCount(notifs.filter((n: any) => !n.read_at).length);
@@ -62,16 +67,20 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
     setNotifications((prev) => prev.map((n) => ({ ...n, read_at: new Date().toISOString() })));
   }
 
-  const activeRequests = requests.filter((r) =>
-    ['pending', 'processing', 'approved'].includes(r.status?.toLowerCase() ?? ''),
-  );
-  const recentActivity = [...notifications, ...requests]
-    .slice(0, 4)
-    .map((item) =>
-      item.data
-        ? { id: item.id, title: item.data?.title ?? 'Notification', desc: item.data?.body ?? '', time: item.created_at, type: 'notif' }
-        : { id: item.id, title: item.document_type?.name ?? 'Request', desc: item.status_label ?? item.status, time: item.created_at, type: 'request' },
-    );
+  const firstName = profile?.name?.split(' ')[0] ?? 'Resident';
+
+  // NOTE: field names below (verification_status, philsys_id, barangay.name) are
+  // placeholders based on likely shape — confirm against UserResource.php and adjust.
+  const verificationStatus: string = profile?.resident_profile?.verification_status ?? 'pending';
+  const isVerified = verificationStatus === 'verified' || verificationStatus === 'approved';
+  const philSysId: string = '—'; // No PhilSys ID field exists in ResidentProfileResource yet
+  const barangayName: string = profile?.barangay?.name ?? '—';
+
+  const readyToClaimCount = requests.filter((r: any) => r.status === 'ready_for_pickup').length;
+  const pendingReviewCount = requests.filter((r: any) =>
+  r.status === 'submitted' || r.status === 'under_review'
+  ).length;
+  const recentRequests = requests.slice(0, 3);
 
   if (loading) {
     return (
@@ -81,18 +90,19 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
     );
   }
 
-  const firstName = profile?.name?.split(' ')[0] ?? 'Resident';
-
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.headerBg }]}>
         <View style={styles.headerLeft}>
           <View style={[styles.logoIcon, { backgroundColor: colors.primary }]}>
             <Text style={[styles.logoText, { color: colors.headerText }]}>⌂</Text>
           </View>
-          <Text style={[styles.logoTitle, { color: colors.headerText }]}>Barangay Connect</Text>
+          <View>
+            <Text style={[styles.logoTitle, { color: colors.headerText }]}>KIDAPAWAN CITY</Text>
+            <Text style={[styles.logoSubtitle, { color: colors.primary }]}>BARANGAY {barangayName.toUpperCase()}</Text>
+          </View>
         </View>
+
         <View style={styles.headerRight}>
           <Pressable style={styles.headerBtn} onPress={handleMarkAllRead}>
             <Text style={styles.headerBtnIcon}>🔔</Text>
@@ -102,8 +112,11 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
               </View>
             )}
           </Pressable>
+
           <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-            <Text style={[styles.avatarText, { color: colors.headerBg }]}>{firstName.charAt(0).toUpperCase()}</Text>
+            <Text style={[styles.avatarText, { color: colors.headerBg }]}>
+              {firstName?.charAt(0)?.toUpperCase() ?? 'R'}
+            </Text>
           </View>
         </View>
       </View>
@@ -114,114 +127,138 @@ export default function HomeScreen({ onNavigate }: HomeScreenProps) {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
       >
-        {/* Welcome */}
-        <View style={styles.welcomeRow}>
-          <Text style={[styles.welcomeSub, { color: colors.textMuted }]}>WELCOME BACK</Text>
-          <Text style={[styles.welcomeName, { color: colors.text }]}>{profile?.name ?? 'Resident'}</Text>
-        </View>
-
-        {/* Active Requests Card */}
-        <Pressable style={[styles.activeCard, { backgroundColor: colors.headerBg, borderLeftColor: colors.primary }]} onPress={() => onNavigate('tracking')}>
-          <View style={styles.activeCardInner}>
-            <View>
-              <Text style={[styles.activeCardLabel, { color: colors.textMuted }]}>Active Requests</Text>
-              <Text style={[styles.activeCardCount, { color: colors.headerText }]}>
-                {activeRequests.length} Barangay Clearance{activeRequests.length !== 1 ? 's' : ''} pending
-              </Text>
-              {activeRequests[0] && (
-                <View style={[styles.readyBadge, { backgroundColor: colors.success }]}>
-                  <Text style={styles.readyText}>
-                    {activeRequests[0].status_label ?? activeRequests[0].status}
-                  </Text>
-                </View>
-              )}
-            </View>
-            <Text style={[styles.activeArrow, { color: colors.primary }]}>›</Text>
-          </View>
-        </Pressable>
-
-        {/* Request Document Shortcut */}
-        <Pressable style={[styles.shortcutCard, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => onNavigate('documents')}>
-          <View style={styles.shortcutLeft}>
-            <View style={[styles.shortcutIcon, { backgroundColor: colors.iconBg }]}>
-              <Text style={[styles.shortcutIconText, { color: colors.iconColor }]}>☰</Text>
-            </View>
-            <View>
-              <Text style={[styles.shortcutTitle, { color: colors.text }]}>Request Document</Text>
-              <Text style={[styles.shortcutDesc, { color: colors.textSecondary }]}>Apply for Clearance, Indigency or Residency</Text>
-            </View>
-          </View>
-          <Text style={[styles.shortcutArrow, { color: colors.primary }]}>›</Text>
-        </Pressable>
-
-        {/* Track Status */}
-        <Pressable style={[styles.trackCard, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => onNavigate('tracking')}>
-          <View style={styles.shortcutLeft}>
-            <View style={[styles.shortcutIcon, { backgroundColor: colors.warningBg }]}>
-              <Text style={[styles.shortcutIconText, { color: colors.iconColor }]}>◎</Text>
-            </View>
-            <View>
-              <Text style={[styles.shortcutTitle, { color: colors.text }]}>Track Status</Text>
-              <Text style={[styles.shortcutDesc, { color: colors.textSecondary }]}>Check your document request status</Text>
-            </View>
-          </View>
-          <Text style={[styles.shortcutArrow, { color: colors.primary }]}>›</Text>
-        </Pressable>
-
-        {/* Help & Support */}
-        <Pressable style={[styles.helpRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={styles.helpIcon}>❓</Text>
-          <Text style={[styles.helpText, { color: colors.text }]}>Help & Support</Text>
-          <Text style={[styles.helpArrow, { color: colors.textMuted }]}>↗</Text>
-        </Pressable>
-
-        {/* Recent Activity */}
-        {recentActivity.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Activity</Text>
-              <Pressable onPress={() => onNavigate('tracking')}>
-                <Text style={[styles.viewAll, { color: colors.primary }]}>View All</Text>
-              </Pressable>
-            </View>
-            <View style={styles.activityList}>
-              {recentActivity.map((item) => (
-                <View key={`${item.type}-${item.id}`} style={[styles.activityItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  <View style={[styles.activityDot, { backgroundColor: colors.success }]} />
-                  <View style={styles.activityContent}>
-                    <Text style={[styles.activityTitle, { color: colors.text }]}>{item.title}</Text>
-                    <Text style={[styles.activityDesc, { color: colors.textSecondary }]}>{item.desc}</Text>
-                  </View>
-                  <Text style={[styles.activityTime, { color: colors.textMuted }]}>{formatTime(item.time)}</Text>
-                </View>
-              ))}
-            </View>
+        {!isVerified && (
+          <View style={[styles.pendingBanner, { borderColor: '#E8B93B', backgroundColor: '#2A2410' }]}>
+            <Text style={[styles.pendingBannerTitle, { color: '#E8B93B' }]}>⚠ Government ID: Pending</Text>
+            <Text style={[styles.pendingBannerText, { color: colors.textMuted }]}>
+              Your uploaded ID/self is currently queued for manual validation by barangay officers.
+            </Text>
+            <Pressable>
+              <Text style={[styles.pendingBannerLink, { color: '#E8B93B' }]}>Edit / Re-upload</Text>
+            </Pressable>
           </View>
         )}
 
-        {/* Announcement Banner */}
-        <View style={[styles.announcementCard, { backgroundColor: colors.headerBg }]}>
-          <View style={[styles.announcementOverlay, { backgroundColor: colors.overlay }]}>
-            <Text style={[styles.announcementBadge, { color: colors.primary }]}>ANNOUNCEMENT</Text>
-            <Text style={[styles.announcementTitle, { color: colors.headerText }]}>Barangay General Assembly</Text>
-            <Text style={[styles.announcementDesc, { color: colors.textMuted }]}>Join us at the Barangay Hall for the quarterly meeting</Text>
+        <View style={[styles.passCard, { backgroundColor: '#0F3D2E', borderColor: colors.primary }]}>
+          <View style={styles.passHeaderRow}>
+            <View style={[styles.passBadge, { backgroundColor: colors.primary }]}>
+              <Text style={styles.passBadgeText}>CITIZEN PASS</Text>
+            </View>
+            <View style={[styles.passStatusBadge, { backgroundColor: '#E8B93B' }]}>
+              <Text style={styles.passStatusText}>ID: Pending (70%)</Text>
+            </View>
+          </View>
+
+          <View style={styles.passBodyRow}>
+            <View style={styles.passAvatarWrap}>
+              <Text style={styles.passAvatarIcon}>👤</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.passName}>{profile?.name ?? 'Resident'}</Text>
+              <Text style={styles.passSub}>Barangay {barangayName}, Kidapawan</Text>
+            </View>
+            <View style={styles.qrPlaceholder}>
+              <Text style={{ fontSize: 20 }}>▦</Text>
+            </View>
+          </View>
+
+          <Text style={styles.passId}>PHILSYS: {philSysId}</Text>
+
+          <Pressable>
+            <Text style={[styles.viewPassLink, { color: colors.primary }]}>View Full Pass →</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.statsRow}>
+          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Ready to Claim</Text>
+            <View style={styles.statValueRow}>
+              <Text style={[styles.statValue, { color: colors.text }]}>{readyToClaimCount}</Text>
+              <Text style={{ color: colors.primary }}>✓</Text>
+            </View>
+          </View>
+
+          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Pending Review</Text>
+            <View style={styles.statValueRow}>
+              <Text style={[styles.statValue, { color: colors.text }]}>{pendingReviewCount}</Text>
+              <Text style={{ color: '#E8B93B' }}>⏱</Text>
+            </View>
           </View>
         </View>
+
+        {!isVerified && (
+          <View style={[styles.lockedCard, { borderColor: colors.danger, backgroundColor: '#2A1414' }]}>
+            <View style={styles.lockedHeaderRow}>
+              <Text style={styles.lockedIcon}>🔒</Text>
+              <Text style={[styles.lockedTitle, { color: colors.text }]}>Document Requests Locked</Text>
+            </View>
+            <Text style={[styles.lockedText, { color: colors.textMuted }]}>
+              Requires verified government ID to submit formal clearances.
+            </Text>
+            <Pressable style={[styles.checkIdBtn, { backgroundColor: colors.danger }]}>
+              <Text style={styles.checkIdBtnText}>Check ID Status</Text>
+            </Pressable>
+          </View>
+        )}
+
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Available Certifications</Text>
+
+        <View style={{ gap: 10 }}>
+          {(documentTypes.length > 0
+            ? documentTypes
+            : [
+                { id: 1, name: 'Barangay Clearance', description: 'For job employment, bank requirements, general clearance purposes.', fee: 50 },
+                { id: 2, name: 'Certificate of Indigency', description: 'For educational scholarship, medical/financial assistance.', fee: 0 },
+                { id: 3, name: 'Certificate of Residency', description: 'Proof of residence within Kidapawan City municipality.', fee: 50 },
+              ]
+          ).map((doc: any) => (
+            <Pressable
+                  key={doc.id}
+                  style={[styles.certCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => onRequestDocument(doc.id)}
+                >
+              <Text style={styles.certIcon}>📄</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.certName, { color: colors.text }]}>{doc.name}</Text>
+                <Text style={[styles.certDesc, { color: colors.textMuted }]} numberOfLines={1}>
+                  {doc.description}
+                </Text>
+              </View>
+              <Text style={[styles.certFee, { color: doc.fee === 0 ? colors.primary : colors.text }]}>
+                {doc.fee === 0 ? 'FREE' : `₱${doc.fee}`}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>My Recent Requests</Text>
+
+        {recentRequests.length === 0 ? (
+          <View style={[styles.emptyRecentCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={styles.emptyRecentIcon}>▤</Text>
+            <Text style={[styles.emptyRecentText, { color: colors.textMuted }]}>No document requests yet.</Text>
+          </View>
+        ) : (
+          <View style={{ gap: 10 }}>
+            {recentRequests.map((req: any) => (
+              <Pressable
+                key={req.id}
+                style={[styles.certCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                onPress={() => onNavigate('documents')}
+              >
+                <Text style={styles.certIcon}>📄</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.certName, { color: colors.text }]}>{req.document_type?.name ?? 'Document Request'}</Text>
+                  <Text style={[styles.certDesc, { color: colors.textMuted }]}>{req.status}</Text>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </View>
   );
-}
-
-function formatTime(iso?: string) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  if (diffMins < 60) return `${diffMins}m ago`;
-  const diffHrs = Math.floor(diffMins / 60);
-  if (diffHrs < 24) return `${diffHrs}h ago`;
-  return `${Math.floor(diffHrs / 24)}d ago`;
 }
 
 const styles = StyleSheet.create({
@@ -229,153 +266,79 @@ const styles = StyleSheet.create({
   loader: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 52,
-    paddingBottom: 16,
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 48,
+    paddingBottom: 14,
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  logoIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoText: { fontSize: 14 },
-  logoTitle: { fontWeight: '700', fontSize: 15 },
+  logoIcon: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  logoText: { fontSize: 14, fontWeight: '700' },
+  logoTitle: { fontSize: 11, fontWeight: '700', letterSpacing: 0.6 },
+  logoSubtitle: { fontSize: 9, fontWeight: '600', letterSpacing: 0.4 },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  headerBtn: { position: 'relative' },
-  headerBtnIcon: { fontSize: 20 },
+  headerBtn: { position: 'relative', padding: 6 },
+  headerBtnIcon: { fontSize: 18 },
   badge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    borderRadius: 999,
-    minWidth: 16,
-    height: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 3,
+    position: 'absolute', top: -4, right: -4, minWidth: 16, height: 16,
+    borderRadius: 8, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4,
   },
   badgeText: { color: '#fff', fontSize: 9, fontWeight: '700' },
-  avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: { fontWeight: '700', fontSize: 14 },
+  avatar: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { fontSize: 13, fontWeight: '700' },
   scroll: { flex: 1 },
-  content: { padding: 20, gap: 12, paddingBottom: 32 },
-  welcomeRow: { gap: 2 },
-  welcomeSub: { fontSize: 11, fontWeight: '600', letterSpacing: 1 },
-  welcomeName: { fontSize: 26, fontWeight: '800' },
-  activeCard: {
-    borderRadius: 16,
-    padding: 18,
-    borderLeftWidth: 4,
+  content: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 32, gap: 14 },
+
+  pendingBanner: { borderWidth: 1, borderRadius: 12, padding: 12, gap: 4 },
+  pendingBannerTitle: { fontSize: 13, fontWeight: '800' },
+  pendingBannerText: { fontSize: 11, lineHeight: 16 },
+  pendingBannerLink: { fontSize: 11, fontWeight: '700', marginTop: 4 },
+
+  passCard: { borderRadius: 16, borderWidth: 1, padding: 14, gap: 10 },
+  passHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  passBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
+  passBadgeText: { fontSize: 10, fontWeight: '800', color: '#041720' },
+  passStatusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999 },
+  passStatusText: { fontSize: 10, fontWeight: '700', color: '#2A2410' },
+  passBodyRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  passAvatarWrap: {
+    width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center', justifyContent: 'center',
   },
-  activeCardInner: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  activeCardLabel: { fontSize: 12, fontWeight: '600', marginBottom: 4 },
-  activeCardCount: { fontSize: 15, fontWeight: '600' },
-  readyBadge: {
-    marginTop: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 999,
-    alignSelf: 'flex-start',
+  passAvatarIcon: { fontSize: 20 },
+  passName: { fontSize: 16, fontWeight: '800', color: '#EAF6FF' },
+  passSub: { fontSize: 11, color: '#9FD9C8' },
+  qrPlaceholder: {
+    width: 40, height: 40, borderRadius: 8, backgroundColor: '#fff',
+    alignItems: 'center', justifyContent: 'center',
   },
-  readyText: { color: '#fff', fontSize: 11, fontWeight: '700' },
-  activeArrow: { fontSize: 28, fontWeight: '300' },
-  shortcutCard: {
-    borderRadius: 14,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  trackCard: {
-    borderRadius: 14,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  shortcutLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
-  shortcutIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  shortcutIconText: { fontSize: 18 },
-  shortcutTitle: { fontWeight: '700', fontSize: 14 },
-  shortcutDesc: { fontSize: 12, marginTop: 2 },
-  shortcutArrow: { fontSize: 24 },
-  helpRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-  },
-  helpIcon: { fontSize: 18 },
-  helpText: { flex: 1, fontSize: 14, fontWeight: '500' },
-  helpArrow: { fontSize: 16 },
-  section: { gap: 10 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  sectionTitle: { fontWeight: '700', fontSize: 16 },
-  viewAll: { fontSize: 13, fontWeight: '600' },
-  activityList: { gap: 8 },
-  activityItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    borderRadius: 12,
-    padding: 12,
-    gap: 10,
-    borderWidth: 1,
-  },
-  activityDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginTop: 5,
-  },
-  activityContent: { flex: 1, gap: 2 },
-  activityTitle: { fontWeight: '600', fontSize: 13 },
-  activityDesc: { fontSize: 12 },
-  activityTime: { fontSize: 11 },
-  announcementCard: {
-    height: 130,
-    borderRadius: 16,
-    overflow: 'hidden',
-    justifyContent: 'flex-end',
-  },
-  announcementOverlay: {
-    padding: 14,
-    gap: 3,
-  },
-  announcementBadge: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 1,
-    marginBottom: 2,
-  },
-  announcementTitle: { fontSize: 15, fontWeight: '700' },
-  announcementDesc: { fontSize: 12 },
+  passId: { fontSize: 12, fontWeight: '700', color: '#2EE6C8' },
+  viewPassLink: { fontSize: 12, fontWeight: '700', textAlign: 'right' },
+
+  statsRow: { flexDirection: 'row', gap: 10 },
+  statCard: { flex: 1, borderRadius: 14, borderWidth: 1, padding: 14, gap: 6 },
+  statLabel: { fontSize: 11, fontWeight: '600' },
+  statValueRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  statValue: { fontSize: 26, fontWeight: '800' },
+
+  lockedCard: { borderWidth: 1, borderRadius: 14, padding: 14, gap: 6 },
+  lockedHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  lockedIcon: { fontSize: 16 },
+  lockedTitle: { fontSize: 14, fontWeight: '800' },
+  lockedText: { fontSize: 11, lineHeight: 16 },
+  checkIdBtn: { alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, marginTop: 4 },
+  checkIdBtnText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+
+  sectionTitle: { fontSize: 15, fontWeight: '800', marginTop: 4 },
+
+  certCard: { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderRadius: 12, padding: 12 },
+  certIcon: { fontSize: 18 },
+  certName: { fontSize: 13, fontWeight: '700' },
+  certDesc: { fontSize: 11, marginTop: 2 },
+  certFee: { fontSize: 12, fontWeight: '800' },
+
+  emptyRecentCard: { borderWidth: 1, borderRadius: 14, padding: 24, alignItems: 'center', gap: 8 },
+  emptyRecentIcon: { fontSize: 28 },
+  emptyRecentText: { fontSize: 12 },
 });

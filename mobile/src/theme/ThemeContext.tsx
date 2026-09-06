@@ -13,19 +13,19 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<ThemeMode>('light');
+  const [theme, setTheme] = useState<ThemeMode>('dark');
 
   useEffect(() => {
     async function loadTheme() {
       try {
         const savedTheme = await AsyncStorage.getItem('app_theme');
-        if (savedTheme === 'dark') {
-          setTheme('dark');
-        } else {
+        if (savedTheme === 'light') {
           setTheme('light');
+        } else {
+          setTheme('dark');
         }
-      } catch (e) {
-        setTheme('light');
+      } catch {
+        setTheme('dark');
       }
     }
     loadTheme();
@@ -36,7 +36,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setTheme(newTheme);
     try {
       await AsyncStorage.setItem('app_theme', newTheme);
-    } catch (e) {
+    } catch {
       // ignore
     }
   };

@@ -1,19 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import AuthScreen from './src/screens/AuthScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import DocumentsScreen from './src/screens/DocumentsScreen';
 import TrackingScreen from './src/screens/TrackingScreen';
 import RequestFormScreen from './src/screens/RequestFormScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import NotificationsScreen from './src/screens/NotificationsScreen';
 import BottomTabBar, { TabName } from './src/components/BottomTabBar';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
 
 function MainApp() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [activeTab, setActiveTab] = useState<TabName>('home');
+  const [selectedDocumentTypeId, setSelectedDocumentTypeId] = useState<number | null>(null);
   const { theme, colors } = useTheme();
 
   useEffect(() => {
@@ -37,20 +39,32 @@ function MainApp() {
     );
   }
 
+  function handleRequestDocument(documentTypeId: number) {
+    setSelectedDocumentTypeId(documentTypeId);
+    setActiveTab('request');
+  }
+
   function renderScreen() {
     switch (activeTab) {
       case 'home':
-        return <HomeScreen onNavigate={setActiveTab} />;
+        return <HomeScreen onNavigate={setActiveTab} onRequestDocument={handleRequestDocument} />;
       case 'documents':
-        return <DocumentsScreen onNavigate={setActiveTab} />;
+        return <DocumentsScreen onNavigate={setActiveTab} onRequestDocument={handleRequestDocument} />;
       case 'tracking':
-        return <TrackingScreen />;
+        return <TrackingScreen onNavigate={setActiveTab} />;
+      case 'notifications':
+        return <NotificationsScreen />;
       case 'request':
-        return <RequestFormScreen onNavigate={setActiveTab} />;
+        return (
+          <RequestFormScreen
+            onNavigate={setActiveTab}
+            initialDocumentTypeId={selectedDocumentTypeId}
+          />
+        );
       case 'profile':
         return <ProfileScreen onLogout={() => setAuthenticated(false)} />;
       default:
-        return <HomeScreen onNavigate={setActiveTab} />;
+        return <HomeScreen onNavigate={setActiveTab} onRequestDocument={handleRequestDocument} />;
     }
   }
 
@@ -74,6 +88,10 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  screen: { flex: 1 },
+  container: {
+    flex: 1,
+  },
+  screen: {
+    flex: 1,
+  },
 });

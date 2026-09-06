@@ -15,6 +15,7 @@ import { useTheme } from '../theme/ThemeContext';
 
 interface DocumentsScreenProps {
   onNavigate: (tab: TabName) => void;
+  onRequestDocument: (documentTypeId: number) => void;
 }
 
 const STATIC_DOC_META: Record<string, { requiredDocs: string[]; fee: number }> = {
@@ -30,13 +31,9 @@ const STATIC_DOC_META: Record<string, { requiredDocs: string[]; fee: number }> =
     requiredDocs: ['Referral'],
     fee: 0,
   },
-  'First Time Job Seeker': {
-    requiredDocs: ['Barangay ID', 'Birth Certificate'],
-    fee: 0,
-  },
 };
 
-export default function DocumentsScreen({ onNavigate }: DocumentsScreenProps) {
+export default function DocumentsScreen({ onNavigate, onRequestDocument }: DocumentsScreenProps) {
   const [documentTypes, setDocumentTypes] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -134,7 +131,7 @@ export default function DocumentsScreen({ onNavigate }: DocumentsScreenProps) {
                   description={type.description ?? 'Required for official business, government applications and legal purposes.'}
                   requiredDocs={meta.requiredDocs.map((l) => ({ label: l }))}
                   fee={type.fee ?? meta.fee}
-                  onRequest={() => handleRequest(type.id, type.name)}
+                  onRequest={() => onRequestDocument(type.id)}
                 />
               );
             })}

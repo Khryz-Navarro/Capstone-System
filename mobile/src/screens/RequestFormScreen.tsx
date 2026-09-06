@@ -17,14 +17,15 @@ import { TabName } from '../components/BottomTabBar';
 import { useTheme } from '../theme/ThemeContext';
 interface RequestFormScreenProps {
   onNavigate: (tab: TabName) => void;
+  initialDocumentTypeId?: number | null;
 }
 
 const STEPS = ['Personal', 'Purpose', 'Notifications'];
 
-export default function RequestFormScreen({ onNavigate }: RequestFormScreenProps) {
+export default function RequestFormScreen({ onNavigate, initialDocumentTypeId }: RequestFormScreenProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [documentTypes, setDocumentTypes] = useState<any[]>([]);
-  const [selectedTypeId, setSelectedTypeId] = useState<number | null>(null);
+  const [selectedTypeId, setSelectedTypeId] = useState<number | null>(initialDocumentTypeId ?? null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -45,16 +46,19 @@ export default function RequestFormScreen({ onNavigate }: RequestFormScreenProps
   const [idPhoto, setIdPhoto] = useState<UploadableFile | null>(null);
   const [supportingDocs, setSupportingDocs] = useState<UploadableFile[]>([]);
 
-  useEffect(() => {
+ useEffect(() => {
     Promise.all([getDocumentTypes(), getProfile()])
       .then(([types, profileData]) => {
         setDocumentTypes(Array.isArray(types) ? types : []);
         setProfile(profileData);
         setFullName(profileData?.name ?? '');
+        if (initialDocumentTypeId) {
+          setSelectedTypeId(initialDocumentTypeId);
+        }
       })
       .catch(() => Alert.alert('Error', 'Unable to load form data.'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [initialDocumentTypeId]);
 
   function validateStep(): boolean {
     if (currentStep === 0) {
@@ -197,7 +201,9 @@ async function handlePickSupportingDocs() {
         >
           {/* Page Title */}
           <View style={styles.titleBlock}>
-            <Text style={[styles.titleMain, { color: colors.text }]}>Request Barangay Clearance</Text>
+            <Text style={[styles.titleMain, { color: colors.text }]}>
+              Request {documentTypes.find((t) => t.id === selectedTypeId)?.name ?? 'Document'}
+            </Text>
             <Text style={[styles.titleSub, { color: colors.textSecondary }]}>Complete the steps below to apply for your official document. Processing usually takes 1-3 business days.</Text>
           </View>
 

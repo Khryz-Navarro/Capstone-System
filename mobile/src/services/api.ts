@@ -46,15 +46,20 @@ interface CreateRequestOptions {
   notificationChannels?: Array<'email' | 'sms'>;
 }
 
+
 export async function loginUser(login: string, password: string, deviceName = Platform.OS) {
   const response = await api.post('/mobile/login', { login, password, device_name: deviceName });
   return response.data.data;
 }
 
 export async function registerUser(payload: Record<string, unknown> | FormData) {
-  const response = await api.post('/auth/register', payload, {
+  const response = await api.post('/register', payload, {
     headers: payload instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : undefined,
   });
+  return response.data.data;
+}
+export async function getBarangays() {
+  const response = await api.get('/barangays');
   return response.data.data;
 }
 
