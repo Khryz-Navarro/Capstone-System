@@ -9,7 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { listRequests } from '../services/api';
+import { getProfile, listRequests } from '../services/api';
 import { useTheme } from '../theme/ThemeContext';
 
 const STEPS = ['Received', 'Processed', 'Notification', 'Ready for Pickup'];
@@ -36,12 +36,18 @@ interface TrackingScreenProps {
 
 export default function TrackingScreen({ onNavigate }: TrackingScreenProps) {
   const [requests, setRequests] = useState<any[]>([]);
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const { colors } = useTheme();
 
   useEffect(() => {
     loadRequests();
+    getProfile()
+      .then(setProfile)
+      .catch(() => {
+        // Header falls back to a generic initial if this fails; not worth blocking the screen.
+      });
   }, []);
 
   async function loadRequests() {
@@ -61,6 +67,7 @@ export default function TrackingScreen({ onNavigate }: TrackingScreenProps) {
     loadRequests();
   }
 
+  const firstName = profile?.name?.split(' ')[0] ?? 'Resident';
   const currentRequest = requests[0] ?? null;
   const currentStep = currentRequest ? getStepIndex(currentRequest.status) : -1;
 
@@ -87,7 +94,9 @@ export default function TrackingScreen({ onNavigate }: TrackingScreenProps) {
             <Text style={styles.headerBtnIcon}>🔔</Text>
           </Pressable>
           <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-            <Text style={[styles.avatarText, { color: colors.headerBg }]}>R</Text>
+            <Text style={[styles.avatarText, { color: colors.headerBg }]}>
+              {firstName?.charAt(0)?.toUpperCase() ?? 'R'}
+            </Text>
           </View>
         </View>
       </View>

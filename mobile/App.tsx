@@ -8,14 +8,18 @@ import DocumentsScreen from './src/screens/DocumentsScreen';
 import TrackingScreen from './src/screens/TrackingScreen';
 import RequestFormScreen from './src/screens/RequestFormScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import EditProfileScreen from './src/screens/EditProfileScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
 import BottomTabBar, { TabName } from './src/components/BottomTabBar';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
+import { getProfile, logoutUser } from './src/services/api';
 
 function MainApp() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [activeTab, setActiveTab] = useState<TabName>('home');
   const [selectedDocumentTypeId, setSelectedDocumentTypeId] = useState<number | null>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [editingProfile, setEditingProfile] = useState(false);
   const { theme, colors } = useTheme();
 
   useEffect(() => {
@@ -25,6 +29,14 @@ function MainApp() {
     }
     bootstrap();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'profile' && authenticated) {
+      getProfile()
+        .then(setProfile)
+        .catch((err) => console.error('Failed to load profile', err));
+    }
+  }, [activeTab, authenticated]);
 
   if (authenticated === null) {
     return null;
@@ -62,7 +74,32 @@ function MainApp() {
           />
         );
       case 'profile':
-        return <ProfileScreen onLogout={() => setAuthenticated(false)} />;
+        if (!profile?.resident_profile) return null;
+
+        if (editingProfile) {
+          return (
+            <EditProfileScreen
+              profile={profile}
+              onCancel={() => setEditingProfile(false)}
+              onSaved={(updated) => {
+                setProfile(updated);
+                setEditingProfile(false);
+              }}
+            />
+          );
+        }
+
+        return (
+          <ProfileScreen
+            profile={profile.resident_profile}
+            onEditDetails={() => setEditingProfile(true)}
+            onEditSection={() => setEditingProfile(true)}
+            onLogout={async () => {
+              await logoutUser();
+              setAuthenticated(false);
+            }}
+          />
+        );
       default:
         return <HomeScreen onNavigate={setActiveTab} onRequestDocument={handleRequestDocument} />;
     }

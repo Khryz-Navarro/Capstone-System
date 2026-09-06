@@ -1,29 +1,24 @@
-import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
+import { getProfile } from '../services/api';
+import AppHeader from '../components/AppHeader';
 
 export default function NotificationsScreen() {
   const { colors } = useTheme();
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    getProfile()
+      .then(setProfile)
+      .catch(() => {
+        // Header falls back to a generic initial if this fails; not worth blocking the screen.
+      });
+  }, []);
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.headerBg }]}>
-        <View style={styles.headerLeft}>
-          <View style={[styles.logoIcon, { backgroundColor: colors.primary }]}>
-            <Text style={[styles.logoText, { color: '#071A27' }]}>⌂</Text>
-          </View>
-          <Text style={[styles.logoTitle, { color: colors.headerText }]}>KIDAPAWAN CITY</Text>
-        </View>
-
-        <View style={styles.headerRight}>
-          <Pressable style={styles.headerBtn}>
-            <Text style={styles.headerBtnIcon}>🔔</Text>
-          </Pressable>
-          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-            <Text style={[styles.avatarText, { color: colors.headerBg }]}>R</Text>
-          </View>
-        </View>
-      </View>
+      <AppHeader profile={profile} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.titleRow}>
@@ -49,57 +44,6 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 48,
-    paddingBottom: 14,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  logoIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoText: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  logoTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.6,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  headerBtn: {
-    padding: 6,
-  },
-  headerBtnIcon: {
-    fontSize: 18,
-  },
-  avatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontSize: 13,
-    fontWeight: '700',
   },
   content: {
     paddingHorizontal: 16,

@@ -12,6 +12,7 @@ import {
 import { getDocumentTypes, getNotifications, getProfile, listRequests, markAllNotificationsRead } from '../services/api';
 import { TabName } from '../components/BottomTabBar';
 import { useTheme } from '../theme/ThemeContext';
+import AppHeader from '../components/AppHeader';
 
 interface HomeScreenProps {
   onNavigate: (tab: TabName) => void;
@@ -67,7 +68,6 @@ export default function HomeScreen({ onNavigate, onRequestDocument }: HomeScreen
     setNotifications((prev) => prev.map((n) => ({ ...n, read_at: new Date().toISOString() })));
   }
 
-  const firstName = profile?.name?.split(' ')[0] ?? 'Resident';
 
   // NOTE: field names below (verification_status, philsys_id, barangay.name) are
   // placeholders based on likely shape — confirm against UserResource.php and adjust.
@@ -92,34 +92,13 @@ export default function HomeScreen({ onNavigate, onRequestDocument }: HomeScreen
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.headerBg }]}>
-        <View style={styles.headerLeft}>
-          <View style={[styles.logoIcon, { backgroundColor: colors.primary }]}>
-            <Text style={[styles.logoText, { color: colors.headerText }]}>⌂</Text>
-          </View>
-          <View>
-            <Text style={[styles.logoTitle, { color: colors.headerText }]}>KIDAPAWAN CITY</Text>
-            <Text style={[styles.logoSubtitle, { color: colors.primary }]}>BARANGAY {barangayName.toUpperCase()}</Text>
-          </View>
-        </View>
-
-        <View style={styles.headerRight}>
-          <Pressable style={styles.headerBtn} onPress={handleMarkAllRead}>
-            <Text style={styles.headerBtnIcon}>🔔</Text>
-            {unreadCount > 0 && (
-              <View style={[styles.badge, { backgroundColor: colors.danger }]}>
-                <Text style={styles.badgeText}>{unreadCount}</Text>
-              </View>
-            )}
-          </Pressable>
-
-          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-            <Text style={[styles.avatarText, { color: colors.headerBg }]}>
-              {firstName?.charAt(0)?.toUpperCase() ?? 'R'}
-            </Text>
-          </View>
-        </View>
-      </View>
+           <AppHeader
+        profile={profile}
+        subtitle={`BARANGAY ${barangayName.toUpperCase()}`}
+        unreadCount={unreadCount}
+        onBellPress={handleMarkAllRead}
+        onAvatarPress={() => onNavigate('profile')}
+      />
 
       <ScrollView
         style={styles.scroll}
